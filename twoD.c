@@ -14,7 +14,7 @@
 
 #define STOP_TIME 60.0
 #define DT  0.00001
-#define N 20
+#define N 100
 
 #define DRAW 100
 
@@ -31,7 +31,7 @@ float ContractionStopTime = 0.6;
 float Viscosity = 10.0;
 float BeatPeriod = 1.0;
 float Radius = 2.0;
-float CentralPush = 30.0;
+float CentralPush = 5.0;
 float Color[N];
 
 void set_initial_conditions()
@@ -39,6 +39,8 @@ void set_initial_conditions()
 	float temp, tempi, tempj, tempk;
 	
 	FiberLength = 2.0*PI*Radius/N;
+	
+	FiberStrength /= N;
 	
 	for(int i = 0; i < N; i++)
 	{
@@ -51,13 +53,15 @@ void set_initial_conditions()
 
 void draw_picture()
 {
+	float nodeRadius = 0.05;
+	
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	
 	glColor3d(1.0,1.0,Color[0]);
 	glPushMatrix();
 	glTranslatef(Px[0], Py[0], 0.0);
-	glutSolidSphere(0.1,20,20);
+	glutSolidSphere(nodeRadius,20,20);
 	glPopMatrix();
 	
 	for(int i = 1; i < N; i++)
@@ -65,7 +69,7 @@ void draw_picture()
 		glColor3d(1.0, 0.0, Color[i]);
 		glPushMatrix();
 		glTranslatef(Px[i], Py[i], 0.0);
-		glutSolidSphere(0.1,20,20);
+		glutSolidSphere(nodeRadius,20,20);
 		glPopMatrix();	
 	}
 	
