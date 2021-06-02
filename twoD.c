@@ -1,5 +1,5 @@
 																																												
-// gcc oneD.c -o temp -lglut -lm -lGLU -lGL
+// gcc twoD.c -o temp2 -lglut -lm -lGLU -lGL
 //To stop hit "control c" in the window you launched it from.
 #include <GL/glut.h>
 #include <math.h>
@@ -13,32 +13,37 @@
 #define YWindowSize 2000 
 
 #define STOP_TIME 60.0
-#define DT  0.0001
-#define N 5	
+#define DT  0.00001
+#define N 20	
 
 #define DRAW 100
 
 // Globals
-float Px[N], Vx[N], Fx[N], Mass[N];
-float FiberLength = 1.0;
+float Px[N], Py[N],Vx[N], Vy[N], Fx[N], Fy[N], Mass[N];
+float FiberLength;
 float FiberStrength = 10.0;
-float SodiumWaveSpeed = 10.0;
+float SodiumWaveSpeed = 30.0;
 float SodiumWaveFront;
-int ContractionOn[N-1];
-float ContractionTime[N-1];
-float ContractionStrength = 20.0;
-float ContractionStopTime = 2.0;
-float Viscosity = 10.0;
-float BeatPeriod = 6.0;
+int ContractionOn[N];
+float ContractionTime[N];
+float ContractionStrength = 150.0;
+float ContractionStopTime = 0.2;
+float Viscosity = 30.0;
+float BeatPeriod = 36.0;
+float Radius = 2.0;
+float CentralPush = 1.0;
 
 void set_initial_conditions()
 {
 	float temp, tempi, tempj, tempk;
-
+	
+	FiberLength = 2.0*PI/N;
+	
 	for(int i = 0; i < N; i++)
 	{
 		Mass[i] = 1.0;
-		Px[i] = (float)i*FiberLength;
+		Px[i] = Radius*cos((float)i*2.0*PI/(float)N+PI/2.0);
+		Py[i] = Radius*sin((float)i*2.0*PI/(float)N+PI/2.0);
 		Vx[i] = 0.0;	
 	}
 }
@@ -50,15 +55,15 @@ void draw_picture()
 	
 	glColor3d(1.0,1.0,0.5);
 	glPushMatrix();
-	glTranslatef(Px[0] -2.0*FiberLength, 0.0, 0.0);
+	glTranslatef(Px[0], Py[0], 0.0);
 	glutSolidSphere(0.1,20,20);
 	glPopMatrix();
 	
 	for(int i = 1; i < N; i++)
 	{
-		glColor3d(0.3*i,1.0,0.3*i);
+		glColor3d(1.0, 0.0, 0.0);
 		glPushMatrix();
-		glTranslatef(Px[i] -2.0*FiberLength, 0.0, 0.0);
+		glTranslatef(Px[i], Py[i], 0.0);
 		glutSolidSphere(0.1,20,20);
 		glPopMatrix();	
 	}
@@ -68,10 +73,15 @@ void draw_picture()
 	for(int i = 0; i < N-1; i++)
 	{
 		glBegin(GL_LINES);
-			glVertex3f(Px[i] -2.0*FiberLength, 0.0, 0.0);
-			glVertex3f(Px[i+1] -2.0*FiberLength, 0.0, 0.0);
+			glVertex3f(Px[i], Py[i], 0.0);
+			glVertex3f(Px[i+1], Py[i+1], 0.0);
 		glEnd();
 	}
+	
+	glBegin(GL_LINES);
+		glVertex3f(Px[N-1], Py[N-1], 0.0);
+		glVertex3f(Px[0], Py[0], 0.0);
+	glEnd();
 	
 	glutSwapBuffers();
 }
@@ -79,7 +89,7 @@ void draw_picture()
 int leapFrog(float dt, float time, float SodiumWaveFront)
 {
 	float f; 
-	float dx,d;
+	float dx,dy,d;
 	
 	for(int i = 0; i < N; i++)
 	{
@@ -89,7 +99,8 @@ int leapFrog(float dt, float time, float SodiumWaveFront)
 	for(int i = 0; i < N-1; i++)
 	{
 		dx = Px[i+1]-Px[i];
-		d  = sqrt(dx*dx);
+		dy = Py[i+1]-Py[i];
+		d  = sqrt(dx*dx+dy*dy);
 		if(d < 0.1*FiberLength)
 		{
 			f  = FiberStrength*10.0*(d - FiberLength);
@@ -101,11 +112,31 @@ int leapFrog(float dt, float time, float SodiumWaveFront)
 		
 		Fx[i]   += f*dx/d;
 		Fx[i+1] -= f*dx/d;
+		Fy[i]   += f*dy/d;
+		Fy[i+1] -= f*dy/d;
 	}
 	
-	for(int i = 0; i < N-1; i++)
+	dx = Px[0]-Px[N-1];
+	dy = Py[0]-Py[N-1];
+	d  = sqrt(dx*dx+dy*dy);
+	
+	if(d < 0.1*FiberLength)
 	{
-		if(Px[i] < SodiumWaveFront)
+		f  = FiberStrength*10.0*(d - FiberLength);
+	}
+	else
+	{
+		f  = FiberStrength*(d - FiberLength);
+	}
+	
+	Fx[N-1]   += f*dx/d;
+	Fx[0]     -= f*dx/d;
+	Fy[N-1]   += f*dy/d;
+	Fy[0]     -= f*dy/d;
+	
+	for(int i = 0; i < N; i++)
+	{
+		if(SodiumWaveFront < Py[i])
 		{
 			if(ContractionOn[i] == 0)
 			{
@@ -118,15 +149,42 @@ int leapFrog(float dt, float time, float SodiumWaveFront)
 	{
 		if(ContractionOn[i] == 1 && ContractionTime[i] < ContractionStopTime)
 		{
-			Fx[i]   += ContractionStrength;
-			Fx[i+1] -= ContractionStrength;
+			dx = Px[i+1]-Px[i];
+			dy = Py[i+1]-Py[i];
+			d  = sqrt(dx*dx+dy*dy);
+			Fx[i]   += ContractionStrength*dx/d;
+			Fx[i+1] -= ContractionStrength*dx/d;
+			Fy[i]   += ContractionStrength*dy/d;
+			Fy[i+1] -= ContractionStrength*dy/d;
 			ContractionTime[i] += dt;
 		}
+	}
+	
+	if(ContractionOn[N-1] == 1 && ContractionTime[N-1] < ContractionStopTime)
+	{
+		dx = Px[0]-Px[N-1];
+		dy = Py[0]-Py[N-1];
+		d  = sqrt(dx*dx+dy*dy);
+		Fx[N-1]   += ContractionStrength*dx/d;
+		Fx[0]     -= ContractionStrength*dx/d;
+		Fy[N-1]   += ContractionStrength*dy/d;
+		Fy[0]     -= ContractionStrength*dy/d;
+		ContractionTime[N-1] += dt;
+	}
+	
+	for(int i = 0; i < N; i++)
+	{	
+		dx = Px[i];
+		dy = Py[i];
+		d  = sqrt(dx*dx+dy*dy);
+		Fx[i]   += CentralPush*dx/d;;
+		Fy[i]   += CentralPush*dy/d;;
 	}
 	
 	for(int i = 0; i < N; i++)
 	{	
 		Fx[i]   += -Viscosity*Vx[i];
+		Fy[i]   += -Viscosity*Vy[i];
 	}
 
 	for(int i = 0; i < N; i++)
@@ -134,13 +192,16 @@ int leapFrog(float dt, float time, float SodiumWaveFront)
 		if(time == 0.0)
 		{
 			Vx[i] += (Fx[i]/Mass[i])*0.5*dt;
+			Vy[i] += (Fy[i]/Mass[i])*0.5*dt;
 		}
 		else
 		{
 			Vx[i] += (Fx[i]/Mass[i])*dt;
+			Vy[i] += (Fy[i]/Mass[i])*dt;
 		}
 
 		Px[i] += Vx[i]*dt;
+		Py[i] += Vy[i]*dt;
 	}
 }
 
@@ -150,12 +211,12 @@ int n_body()
 	float  time = 0.0;
 	float beatTimer = 0.0;
 	
-	for(int i = 0; i < N-1; i++)
+	for(int i = 0; i < N; i++)
 	{
 		ContractionOn[i] = 0;
 		ContractionTime[i] = 0.0;
 	}
-	SodiumWaveFront = Px[0];
+	SodiumWaveFront = Py[0];
 	
 	while(time < STOP_TIME)
 	{
@@ -167,18 +228,18 @@ int n_body()
 			tdraw = 0;
 		}
 		
-		SodiumWaveFront += SodiumWaveSpeed*DT;
+		SodiumWaveFront -= SodiumWaveSpeed*DT;
 		time += DT;
 		tdraw++;
 		
 		if(BeatPeriod < beatTimer)
 		{
-			for(int i = 0; i < N-1; i++)
+			for(int i = 0; i < N; i++)
 			{
 				ContractionOn[i] = 0;
 				ContractionTime[i] = 0.0;
 			}
-			SodiumWaveFront = Px[0];
+			SodiumWaveFront = Py[0];
 			beatTimer = 0.0;
 		}
 		beatTimer += DT;
@@ -234,7 +295,7 @@ int main(int argc, char** argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGB);
 	glutInitWindowSize(XWindowSize,YWindowSize);
 	glutInitWindowPosition(0,0);
-	glutCreateWindow("1D Myocardium");
+	glutCreateWindow("2D Atrium");
 	GLfloat light_position[] = {1.0, 1.0, 1.0, 0.0};
 	GLfloat light_ambient[]  = {0.0, 0.0, 0.0, 1.0};
 	GLfloat light_diffuse[]  = {1.0, 1.0, 1.0, 1.0};
