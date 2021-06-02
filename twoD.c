@@ -14,14 +14,14 @@
 
 #define STOP_TIME 60.0
 #define DT  0.00001
-#define N 20	
+#define N 20
 
 #define DRAW 100
 
 // Globals
 float Px[N], Py[N],Vx[N], Vy[N], Fx[N], Fy[N], Mass[N];
 float FiberLength;
-float FiberStrength = 300.0;
+float FiberStrength = 1000.0;
 float SodiumWaveSpeed = 30.0;
 float SodiumWaveFront;
 int ContractionOn[N];
@@ -31,7 +31,7 @@ float ContractionStopTime = 0.6;
 float Viscosity = 10.0;
 float BeatPeriod = 1.0;
 float Radius = 2.0;
-float CentralPush = 20.0;
+float CentralPush = 30.0;
 float Color[N];
 
 void set_initial_conditions()
