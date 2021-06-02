@@ -21,23 +21,24 @@
 // Globals
 float Px[N], Py[N],Vx[N], Vy[N], Fx[N], Fy[N], Mass[N];
 float FiberLength;
-float FiberStrength = 10.0;
+float FiberStrength = 300.0;
 float SodiumWaveSpeed = 30.0;
 float SodiumWaveFront;
 int ContractionOn[N];
 float ContractionTime[N];
-float ContractionStrength = 150.0;
-float ContractionStopTime = 0.2;
-float Viscosity = 30.0;
-float BeatPeriod = 36.0;
+float ContractionStrength = 200.0;
+float ContractionStopTime = 0.6;
+float Viscosity = 10.0;
+float BeatPeriod = 1.0;
 float Radius = 2.0;
-float CentralPush = 1.0;
+float CentralPush = 20.0;
+float Color[N];
 
 void set_initial_conditions()
 {
 	float temp, tempi, tempj, tempk;
 	
-	FiberLength = 2.0*PI/N;
+	FiberLength = 2.0*PI*Radius/N;
 	
 	for(int i = 0; i < N; i++)
 	{
@@ -53,7 +54,7 @@ void draw_picture()
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	
-	glColor3d(1.0,1.0,0.5);
+	glColor3d(1.0,1.0,Color[0]);
 	glPushMatrix();
 	glTranslatef(Px[0], Py[0], 0.0);
 	glutSolidSphere(0.1,20,20);
@@ -61,7 +62,7 @@ void draw_picture()
 	
 	for(int i = 1; i < N; i++)
 	{
-		glColor3d(1.0, 0.0, 0.0);
+		glColor3d(1.0, 0.0, Color[i]);
 		glPushMatrix();
 		glTranslatef(Px[i], Py[i], 0.0);
 		glutSolidSphere(0.1,20,20);
@@ -83,6 +84,12 @@ void draw_picture()
 		glVertex3f(Px[0], Py[0], 0.0);
 	glEnd();
 	
+	glColor3d(1.0,1.0,0.0);
+	glBegin(GL_LINES);
+		glVertex3f(-Radius, SodiumWaveFront, 0.0);
+		glVertex3f(Radius, SodiumWaveFront, 0.0);
+	glEnd();
+	
 	glutSwapBuffers();
 }
 
@@ -94,6 +101,7 @@ int leapFrog(float dt, float time, float SodiumWaveFront)
 	for(int i = 0; i < N; i++)
 	{
 		Fx[i] = 0.0;
+		Fy[i] = 0.0;
 	}
 		
 	for(int i = 0; i < N-1; i++)
@@ -157,6 +165,11 @@ int leapFrog(float dt, float time, float SodiumWaveFront)
 			Fy[i]   += ContractionStrength*dy/d;
 			Fy[i+1] -= ContractionStrength*dy/d;
 			ContractionTime[i] += dt;
+			Color[i] = 1.0;
+		}
+		else
+		{
+			Color[i] = 0.0;
 		}
 	}
 	
@@ -170,6 +183,11 @@ int leapFrog(float dt, float time, float SodiumWaveFront)
 		Fy[N-1]   += ContractionStrength*dy/d;
 		Fy[0]     -= ContractionStrength*dy/d;
 		ContractionTime[N-1] += dt;
+		Color[N-1] = 1.0;
+	}
+	else
+	{
+		Color[N-1] = 0.0;
 	}
 	
 	for(int i = 0; i < N; i++)
@@ -226,6 +244,7 @@ int n_body()
 		{
 			draw_picture();
 			tdraw = 0;
+			printf("Time = %f\n", time);
 		}
 		
 		SodiumWaveFront -= SodiumWaveSpeed*DT;
