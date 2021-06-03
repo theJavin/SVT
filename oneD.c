@@ -1,6 +1,6 @@
 																																												
 // gcc oneD.c -o temp -lglut -lm -lGLU -lGL
-//To stop hit "control c" in the window you launched it from.
+//To stop hit "control c" in the window you launched it from. stuff
 #include <GL/glut.h>
 #include <math.h>
 #include <stdio.h>
@@ -72,6 +72,13 @@ void draw_picture()
 			glVertex3f(Px[i+1] -2.0*FiberLength, 0.0, 0.0);
 		glEnd();
 	}
+	
+	glColor3d(1.0,1.0,0.0);
+	glLineWidth(5.0);
+	glBegin(GL_LINES);
+		glVertex3f(SodiumWaveFront, -0.5, 0.0);
+		glVertex3f(SodiumWaveFront, 0.5, 0.0);
+	glEnd();
 	
 	glutSwapBuffers();
 }
