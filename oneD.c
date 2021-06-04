@@ -1,4 +1,4 @@
-// gcc oneD1.1.c -o temp -lglut -lm -lGLU -lGL
+// gcc oneD.c -o temp -lglut -lm -lGLU -lGL
 //To stop hit "control c" in the window you launched it from. stuff
 // Length will be in millimeters
 // Time will be in seconds
