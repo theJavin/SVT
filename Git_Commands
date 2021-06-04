@@ -57,6 +57,9 @@ git push --set-upstream origin main
 
 */
 
+*/
+git commit -a -m "message"
+git push --set-upstream origin wyatt 
 /*
 
 Example: contribute to an existing branch on GitHub
