@@ -1,5 +1,33 @@
 Common Git Commands:
 
+
+/*
+Basic Commands:
+
+git init //initializes a folder or repository in git
+
+git clone <url> //copies the repository from github
+
+git add file //adds file to the staging area (basically pre-save)
+
+git status //in short it tells you what's going on
+
+git pull //fetch updates from a remote repository and merges them with your current branch
+
+git push //pushes your new changes to a remote repository
+
+git commit //commit all staged changes (basically getting ready for push)
+
+git fetch -a //fetches all branches
+
+git checkout [branch] //moves over to the named branch
+
+git branch //creates new local branch based on the current branch
+
+*/
+
+
+
 /*
 Example: Contribute to an existing repository
 
@@ -57,11 +85,17 @@ git push --set-upstream origin main
 
 */
 
+
+
+
 */
 git commit -a -m "message"
 git push --set-upstream origin wyatt 
 /*
 
+
+
+/*
 Example: contribute to an existing branch on GitHub
 
 # assumption: a project called `repo` already exists on the machine, and a new branch has been pushed to GitHub.com since the last time changes were made locally
