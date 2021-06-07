@@ -1,10 +1,12 @@
 // gcc oneD.c -o temp -lglut -lm -lGLU -lGL
 //To stop hit "control c" in the window you launched it from. stuff
+
 // Length will be in millimeters
-// Time will be in seconds
+// Time will be in milliseconds
 // Mass will be in ???
+
 // Fiber length 100 micrometers or 0.1 millimeters
-// Sodium wave speed .5 meters/sec or 500 millimeters/sec
+// Sodium wave speed .5 meters/sec or 0.5 millimeters/millisec
 #include <GL/glut.h>
 #include <math.h>
 #include <stdio.h>
@@ -16,24 +18,39 @@
 #define XWindowSize 2000
 #define YWindowSize 2000 
 
-#define STOP_TIME 60.0
-#define DT  0.00001
+#define STOP_TIME 60000.0
+#define DT  0.001
 #define N 10
 	
-#define DRAW 100
+#define DRAW 1000
 
 // Globals
 float Px[N], Vx[N], Fx[N], Mass[N];
+
 float FiberLength = 0.1;
-float FiberStrength = 50.0;
-float SodiumWaveSpeed = 500.0;
+float FiberStrength = 10.0;
+float FiberCompresionMultiplier = 10.0;
+float FiberTentionMultiplier = 10.0;
+float FiberCompresionStopFraction = 0.3;
+
+float TendonLength = 0.1;
+float TendonStrength = 1.0;
+float TendonCompresionMultiplier = 10.0;
+float TendonTentionMultiplier = 10.0;
+float TendonCompresionStopFraction = 0.3;
+
+float SodiumWaveSpeed = 0.01; //0.5;
 float SodiumWaveFront;
+
+float ContractionStrength = 5.0;
 int ContractionOn[N-1];
 float ContractionTime[N-1];
-float ContractionStrength = 20.0;
-float ContractionStopTime = 0.5;
+float ContractionStopTime = 100.0;
+float ContractionRelaxationTime = 200.0;
+
+float BeatPeriod = 200.0;
+
 float Viscosity = 10.0;
-float BeatPeriod = 1.0;
 float AttachmentStart, AttachmentStop;
 
 void set_initial_conditions()
@@ -119,9 +136,9 @@ int leapFrog(float dt, float time, float SodiumWaveFront)
 	{
 		dx = Px[i+1]-Px[i];
 		d  = sqrt(dx*dx);
-		if(d < 0.5*FiberLength)
+		if(d < FiberCompresionStopFraction*FiberLength)
 		{
-			f  = FiberStrength*10.0*(d - FiberLength);
+			f  = FiberStrength*FiberCompresionMultiplier*(d - FiberLength);
 		}
 		else if(d < FiberLength)
 		{
@@ -129,7 +146,7 @@ int leapFrog(float dt, float time, float SodiumWaveFront)
 		}
 		else
 		{
-			f  = FiberStrength*10.0*(d - FiberLength);
+			f  = FiberStrength*FiberTentionMultiplier*(d - FiberLength);
 		}
 		
 		Fx[i]   += f*dx/d;
@@ -138,37 +155,37 @@ int leapFrog(float dt, float time, float SodiumWaveFront)
 	
 	dx = AttachmentStart-Px[0];
 	d  = sqrt(dx*dx);
-	if(d < 0.5*FiberLength)
+	if(d < TendonCompresionStopFraction*TendonLength)
 	{
-		f  = FiberStrength*10.0*(d - FiberLength);
+		f  = TendonStrength*TendonCompresionMultiplier*(d - TendonLength);
 	}
 	else if(d < FiberLength)
 	{
-		f  = 0.0*(d - FiberLength);
+		f  = TendonStrength*(d - FiberLength);
 	}
 	else
 	{
-		f  = FiberStrength*1.0*(d - FiberLength);
+		f  = TendonStrength*TendonTentionMultiplier*(d - TendonLength);
 	}
 	Fx[0]   += f*dx/d;
 	
 	dx = AttachmentStop-Px[N-1];
 	d  = sqrt(dx*dx);
-	if(d < 0.5*FiberLength)
+	if(d < TendonCompresionStopFraction*FiberLength)
 	{
-		f  = FiberStrength*10.0*(d - FiberLength);
+		f  = TendonStrength*TendonCompresionMultiplier*(d - TendonLength);
 	}
 	else if(d < FiberLength)
 	{
-		f  = 0.0*(d - FiberLength);
+		f  = TendonStrength*(d - TendonLength);
 	}
 	else
 	{
-		f  = FiberStrength*1.0*(d - FiberLength);
+		f  = TendonStrength*TendonTentionMultiplier*(d - TendonLength);
 	}
 	Fx[N-1]   += f*dx/d;
 	
-	// 
+	// Sending the sodium wave
 	for(int i = 0; i < N-1; i++)
 	{
 		if(Px[i] < SodiumWaveFront)
@@ -183,11 +200,25 @@ int leapFrog(float dt, float time, float SodiumWaveFront)
 	// Getting forces for the muscle fiber contraction
 	for(int i = 0; i < N-1; i++)
 	{
-		if(ContractionOn[i] == 1 && ContractionTime[i] < ContractionStopTime)
+		if(ContractionOn[i] == 1)
 		{
-			Fx[i]   += ContractionStrength;
-			Fx[i+1] -= ContractionStrength;
-			ContractionTime[i] += dt;
+			if(ContractionTime[i] < ContractionStopTime)
+			{
+				Fx[i]   += ContractionStrength;
+				Fx[i+1] -= ContractionStrength;
+				ContractionTime[i] += dt;
+			}
+			else if(ContractionTime[i] < ContractionStopTime + ContractionRelaxationTime)
+			{
+				Fx[i]   += 0.0;
+				Fx[i+1] -= 0.0;
+				ContractionTime[i] += dt;
+			}
+			else
+			{
+				ContractionOn[i] == 0;
+				ContractionTime[i] = 0.0;
+			}
 		}
 	}
 	
@@ -215,8 +246,8 @@ int leapFrog(float dt, float time, float SodiumWaveFront)
 
 int n_body()
 {
-	int    tdraw = 0; 
-	float  time = 0.0;
+	int   tdraw = 0; 
+	float time = 0.0;
 	float beatTimer = 0.0;
 	
 	for(int i = 0; i < N-1; i++)
@@ -234,6 +265,7 @@ int n_body()
 		{
 			draw_picture();
 			tdraw = 0;
+			printf("\n Time = %f", time);
 		}
 		
 		SodiumWaveFront += SodiumWaveSpeed*DT;
@@ -242,11 +274,12 @@ int n_body()
 		
 		if(BeatPeriod < beatTimer)
 		{
-			for(int i = 0; i < N-1; i++)
+			/*for(int i = 0; i < N-1; i++)
 			{
 				ContractionOn[i] = 0;
 				ContractionTime[i] = 0.0;
 			}
+			*/
 			SodiumWaveFront = Px[0];
 			beatTimer = 0.0;
 		}
