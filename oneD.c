@@ -19,7 +19,7 @@
 #define YWindowSize 2000 
 
 #define STOP_TIME 60000.0
-#define DT  0.0001
+#define DT  0.001
 #define N 10
 	
 #define DRAW 1000
@@ -39,16 +39,16 @@ float TendonCompresionMultiplier = 10.0;
 float TendonTentionMultiplier = 10.0;
 float TendonCompresionStopFraction = 0.6;
 
-float SodiumWaveSpeed = 0.5; //0.01; //0.5;
-float SodiumWaveFront;
+float APWaveSpeed[N]; //0.5 is a good value.
+float APWaveFront;
 
-float ContractionStrength = 5.0;
+float ContractionStrength[N-1]; // 5.0 is a good value
 int ContractionOn[N-1];
 float ContractionTime[N-1];
-float ContractionStopTime = 100.0;
-float ContractionRelaxationTime = 200.0;
+float ContractionDuration[N-1]; // 100.0 is a good value
+float RelaxationDuration[N-1]; // 200.0 is a good value
 
-float BeatPeriod = 200.0;
+float BeatPeriod = 400.0;
 
 float Viscosity = 10.0;
 float AttachmentLeft, AttachmentRight;
@@ -57,12 +57,29 @@ void set_initial_conditions()
 {
 	float centerX = FiberLength*(N+1)/2.0;
 	AttachmentLeft = 0.0 - centerX;
+	
+	// Node Values
 	for(int i = 0; i < N; i++)
 	{
 		Mass[i] = 1.0;
 		Px[i] = (float)(i+1)*FiberLength - centerX;
 		Vx[i] = 0.0;	
 	}
+	
+	// Muscle (connector) Values
+	for(int i = 0; i < N-1; i++)
+	{	
+		APWaveSpeed[i] = 0.01;
+		RelaxationDuration[i] = 200.0;
+		ContractionStrength[i] = 5.0;
+		ContractionDuration[i] = 100.0;
+	}
+	
+	RelaxationDuration[3] = 400.0;
+	RelaxationDuration[4] = 400.0;
+	RelaxationDuration[5] = 400.0;
+	RelaxationDuration[6] = 400.0;
+	
 	AttachmentRight = (float)(N+1)*FiberLength - centerX;
 }
 
@@ -108,12 +125,18 @@ void draw_picture()
 
 	// Drawing sodium wave front
 	glColor3d(1.0,1.0,0.0);
+	glPushMatrix();
+	glTranslatef(APWaveFront, 0.0, 0.0);
+	glutSolidSphere(0.02,20,20);
+	glPopMatrix();
+	/*	
+	glColor3d(1.0,1.0,0.0);
 	glLineWidth(2.0);
 	glBegin(GL_LINES);
-		glVertex3f(SodiumWaveFront, -0.5, 0.0);
-		glVertex3f(SodiumWaveFront, 0.5, 0.0);
+		glVertex3f(APWaveFront, -0.5, 0.0);
+		glVertex3f(APWaveFront, 0.5, 0.0);
 	glEnd();
-	
+	*/
 	glutSwapBuffers();
 }
 
@@ -181,13 +204,13 @@ int contractionForces(float dt, float time)
 {
 	float f; 
 	float dx,d;
-	int flag;
+	int flag, flag2;
 	float ratio;
 	
 	// Checking the sodium wave location.
 	for(int i = 0; i < N-1; i++)
 	{
-		if(Px[i] <= SodiumWaveFront && SodiumWaveFront < Px[i+1])
+		if(Px[i] <= APWaveFront && APWaveFront < Px[i+1])
 		{
 			if(ContractionOn[i] == 0)
 			{
@@ -201,13 +224,13 @@ int contractionForces(float dt, float time)
 	{
 		if(ContractionOn[i] == 1)
 		{
-			if(ContractionTime[i] < ContractionStopTime)
+			if(ContractionTime[i] < ContractionDuration[i])
 			{
-				Fx[i]   += ContractionStrength;
-				Fx[i+1] -= ContractionStrength;
+				Fx[i]   += ContractionStrength[i];
+				Fx[i+1] -= ContractionStrength[i];
 				ContractionTime[i] += dt;
 			}
-			else if(ContractionTime[i] < ContractionStopTime + ContractionRelaxationTime)
+			else if(ContractionTime[i] < ContractionDuration[i] + RelaxationDuration[i])
 			{
 				Fx[i]   += 0.0;
 				Fx[i+1] -= 0.0;
@@ -215,20 +238,28 @@ int contractionForces(float dt, float time)
 			}
 			else
 			{
-				ContractionOn[i] == 0;
+				ContractionOn[i] = 0;
 				ContractionTime[i] = 0.0;
 			}
 		}
 	}
 	
-	// Fiding which cell the sodium wave front is in. Then finding it's ratio between them.
+	// Fiding which cell the AP wave front is in. Then finding it's ratio between them.
 	flag = -1;
+	flag2 = 0;
 	for(int i = 0; i < N-1; i++)
 	{
-		if(Px[i] <= SodiumWaveFront && SodiumWaveFront < Px[i+1])
+		if(Px[i] <= APWaveFront && APWaveFront < Px[i+1])
 		{
-			ratio = (SodiumWaveFront - Px[i])/(Px[i+1]-Px[i]);
-			flag = i;
+			if((flag2 == i) && (ContractionTime[i] != 0.0))
+			{
+				flag = -1;
+			}
+			else
+			{
+				ratio = (APWaveFront - Px[i])/(Px[i+1]-Px[i]);
+				flag = i;
+			}
 		}
 	}
 
@@ -250,11 +281,11 @@ int contractionForces(float dt, float time)
 	// Moving sodium wave front
 	if(flag == -1)
 	{
-		SodiumWaveFront = AttachmentLeft;
+		APWaveFront = AttachmentLeft;
 	}
 	else
 	{
-		SodiumWaveFront = Px[flag] + (Px[flag+1]-Px[flag])*ratio + SodiumWaveSpeed*DT;
+		APWaveFront = Px[flag] + (Px[flag+1]-Px[flag])*ratio + APWaveSpeed[flag]*DT;
 	}
 }
 
@@ -269,7 +300,7 @@ int n_body()
 		ContractionOn[i] = 0;
 		ContractionTime[i] = 0.0;
 	}
-	SodiumWaveFront = Px[0];
+	APWaveFront = Px[0];
 	
 	while(time < STOP_TIME)
 	{
@@ -302,7 +333,7 @@ int n_body()
 		
 		if(BeatPeriod < beatTimer)
 		{
-			SodiumWaveFront = Px[0];
+			APWaveFront = Px[0];
 			beatTimer = 0.0;
 		}
 		else
@@ -352,7 +383,7 @@ void reshape(int w, int h)
 
 	glLoadIdentity();
 
-	glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 50.0);
+	glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 80.0);
 
 	glMatrixMode(GL_MODELVIEW);
 }

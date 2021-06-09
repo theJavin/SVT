@@ -47,7 +47,8 @@ void set_initial_conditions()
 		Mass[i] = 1.0;
 		Px[i] = Radius*cos((float)i*2.0*PI/(float)N+PI/2.0);
 		Py[i] = Radius*sin((float)i*2.0*PI/(float)N+PI/2.0);
-		Vx[i] = 0.0;	
+		Vx[i] = 0.0;
+		Vy[i] = 0.0;	
 	}
 }
 
