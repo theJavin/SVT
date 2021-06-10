@@ -41,6 +41,7 @@ float TendonCompresionStopFraction = 0.6;
 
 float APWaveSpeed[N]; //0.5 is a good value.
 float APWaveFront;
+int APWaveAmunity;
 
 float ContractionStrength[N-1]; // 5.0 is a good value
 int ContractionOn[N-1];
@@ -206,17 +207,28 @@ int contractionForces(float dt, float time)
 	float dx,d;
 	int flag, flag2;
 	float ratio;
+	//int APWaveAmunity;
+	int aPWaveFrontInMuscle;
 	
-	// Checking the sodium wave location.
+	// Checking which muscle the APWaveFront is in, turning on that muscle if it is ready, finding its ratio in so we can properly place it in the moving muscle.
+	aPWaveFrontInMuscle = -1;
 	for(int i = 0; i < N-1; i++)
 	{
 		if(Px[i] <= APWaveFront && APWaveFront < Px[i+1])
 		{
+			ratio = (APWaveFront - Px[i])/(Px[i+1]-Px[i]);
+			aPWaveFrontInMuscle = i;
 			if(ContractionOn[i] == 0)
 			{
 				ContractionOn[i] = 1;
+				APWaveAmunity = i;
 			}
 		}
+	}
+	
+	if(APWaveAmunity != aPWaveFrontInMuscle)
+	{
+		aPWaveFrontInMuscle = -1;
 	}
 	
 	// Getting forces for the muscle fiber contraction
@@ -243,25 +255,6 @@ int contractionForces(float dt, float time)
 			}
 		}
 	}
-	
-	// Fiding which cell the AP wave front is in. Then finding it's ratio between them.
-	flag = -1;
-	flag2 = 0;
-	for(int i = 0; i < N-1; i++)
-	{
-		if(Px[i] <= APWaveFront && APWaveFront < Px[i+1])
-		{
-			if((flag2 == i) && (ContractionTime[i] != 0.0))
-			{
-				flag = -1;
-			}
-			else
-			{
-				ratio = (APWaveFront - Px[i])/(Px[i+1]-Px[i]);
-				flag = i;
-			}
-		}
-	}
 
 	// Moving the system forward in time with leap-frog.
 	for(int i = 0; i < N; i++)
@@ -279,13 +272,13 @@ int contractionForces(float dt, float time)
 	}
 	
 	// Moving sodium wave front
-	if(flag == -1)
+	if(aPWaveFrontInMuscle == -1)
 	{
 		APWaveFront = AttachmentLeft;
 	}
 	else
 	{
-		APWaveFront = Px[flag] + (Px[flag+1]-Px[flag])*ratio + APWaveSpeed[flag]*DT;
+		APWaveFront = Px[aPWaveFrontInMuscle] + (Px[aPWaveFrontInMuscle+1]-Px[aPWaveFrontInMuscle])*ratio + APWaveSpeed[aPWaveFrontInMuscle]*DT;
 	}
 }
 
@@ -301,6 +294,7 @@ int n_body()
 		ContractionTime[i] = 0.0;
 	}
 	APWaveFront = Px[0];
+	APWaveAmunity = -1;
 	
 	while(time < STOP_TIME)
 	{
