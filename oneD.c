@@ -205,9 +205,7 @@ int contractionForces(float dt, float time)
 {
 	float f; 
 	float dx,d;
-	int flag, flag2;
 	float ratio;
-	//int APWaveAmunity;
 	int aPWaveFrontInMuscle;
 	
 	// Checking which muscle the APWaveFront is in, turning on that muscle if it is ready, finding its ratio in so we can properly place it in the moving muscle.
