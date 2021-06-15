@@ -42,6 +42,7 @@ float MuscleCompresionMultiplier = 10.0;
 float MuscleTentionMultiplier = 10.0;
 float MuscleCompresionStopFraction[NUMBER_OF_MUSCLES];  // 0.6 is the standard value
 float Viscosity = 10.0;
+float3 MuscleColor[NUMBER_OF_MUSCLES];
 
 // Muscle contraction parameters
 int ContractionOnOff[NUMBER_OF_MUSCLES];
@@ -319,6 +320,9 @@ int set_initial_conditions()
 		ContractionDuration[i] = 100.0;
 		RelaxationDuration[i] = 200.0;
 		ContractionStrength[i] = 0.1;
+		MuscleColor[i].x = 1.0;
+		MuscleColor[i].y = 0.0;
+		MuscleColor[i].z = 0.0;
 	}
 	
 	// Setting the node masses
@@ -368,6 +372,7 @@ void draw_picture()
 		{
 			if(NodeLinks[i][j] != -1)
 			{
+				glColor3d(MuscleColor[NodeMuscles[i][j]].x, MuscleColor[NodeMuscles[i][j]].y, MuscleColor[NodeMuscles[i][j]].z);
 				//glLineWidth(1.0/(Px[i]-Px[NodeLinks[i][j]]));
 				glBegin(GL_LINES);
 					glVertex3f(NodePosition[i].x, NodePosition[i].y, NodePosition[i].z);
@@ -499,7 +504,13 @@ int contractionForces(float dt, float time)
 					{
 						turnOnNodeMuscles(nodeNumber);
 					}
-					if(ContractionTimer[muscleNumber] < ContractionDuration[muscleNumber])
+					if(ContractionTimer[muscleNumber] < ActionPotentialDuration[muscleNumber])
+					{
+						MuscleColor[muscleNumber].x = 1.0;
+						MuscleColor[muscleNumber].y = 1.0;
+						MuscleColor[muscleNumber].z = 0.0;
+					}
+					else if(ContractionTimer[muscleNumber] < ContractionDuration[muscleNumber])
 					{
 						dx = NodePosition[nodeNumber].x - NodePosition[i].x;
 						dy = NodePosition[nodeNumber].y - NodePosition[i].y;
@@ -509,6 +520,10 @@ int contractionForces(float dt, float time)
 						NodeForce[i].x   += ContractionStrength[muscleNumber]*dx/d;
 						NodeForce[i].y   += ContractionStrength[muscleNumber]*dy/d;
 						NodeForce[i].z   += ContractionStrength[muscleNumber]*dz/d;
+						
+						MuscleColor[muscleNumber].x = 1.0;
+						MuscleColor[muscleNumber].y = 0.0;
+						MuscleColor[muscleNumber].z = 1.0;
 					
 						ContractionTimer[muscleNumber] += dt;
 					}
@@ -517,10 +532,19 @@ int contractionForces(float dt, float time)
 						NodeForce[i].x   += 0.0;
 						NodeForce[i].y   += 0.0;
 						NodeForce[i].z   += 0.0;
+						
+						MuscleColor[muscleNumber].x = 0.0;
+						MuscleColor[muscleNumber].y = 0.0;
+						MuscleColor[muscleNumber].z = 1.0;
+						
 						ContractionTimer[muscleNumber] += dt;
 					}
 					else
 					{
+						MuscleColor[muscleNumber].x = 1.0;
+						MuscleColor[muscleNumber].y = 0.0;
+						MuscleColor[muscleNumber].z = 0.0;
+						
 						ContractionOnOff[muscleNumber] = 0;
 						ContractionTimer[muscleNumber] = 0.0;
 					}
