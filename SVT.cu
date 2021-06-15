@@ -24,7 +24,7 @@
 #define NUMBER_OF_NODES 62
 #define NUMBER_OF_MUSCLES 132
 	
-#define DRAW_RATE 1000
+#define DRAW_RATE 200
 
 // Globals
 float4 NodePosition[NUMBER_OF_NODES], NodeVelocity[NUMBER_OF_NODES], NodeForce[NUMBER_OF_NODES];
@@ -102,48 +102,21 @@ int set_initial_conditions()
 	}
 	
 
-	// Below are the edges for the links connecting the sphere.
+	// Below are the edges for the links connecting 62 node sphere.
 	// 0: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
 	
-	// 1:  0  12 2  13		13: 1  24 14 25		25: 13 36 26 37
-	// 2:  0  1  3  14		14: 2  13 15 26		26: 14 25 27 38
-	// 3:  0  2  4  15		15: 3  14 16 27		27: 15 26 27 39
-	// 4:  0  3  5  16		16: 4  15 17 28		28: 16 27 27 40
-	// 5:  0  4  6  17		17: 5  16 18 29		29: 17 28 27 41
-	// 6:  0  5  7  18		18: 6  17 19 30		30: 18 29 27 42
-	// 7:  0  6  8  19		19: 7  18 20 31		31: 19 30 27 43
-	// 8:  0  7  9  20		20: 8  19 21 32		32: 20 31 27 44
-	// 9:  0  8  10 21		21: 9  20 22 33		33: 21 32 27 45
-	// 10: 0  9  11 22		22: 10 21 23 34		34: 22 33 27 46
-	// 11: 0  10 12 23		23: 11 22 24 35		35: 23 34 27 47
-	// 12: 0  11 1  24		24: 12 23 13 36		36: 24 35 25 48
-	
-	
-	// 37: 25 48 38 49
-	// 38: 26 37 39 50
-	// 39: 27 38 40 51
-	// 40: 28 39 41 52
-	// 41: 29 40 42 53
-	// 42: 30 41 43 54
-	// 43: 31 41 44 55
-	// 44: 32 43 45 56
-	// 45: 33 44 46 57
-	// 46: 34 45 47 58
-	// 47: 35 46 48 59
-	// 48: 36 47 37 60
-	
-	// 49: 37 60 50 61
-	// 50: 38 49 51 61
-	// 51: 39 50 52 61
-	// 52: 40 51 53 61
-	// 53: 41 52 54 61
-	// 54: 42 53 55 61
-	// 55: 43 54 56 61
-	// 56: 44 55 57 61
-	// 57: 45 56 58 61
-	// 58: 46 57 59 61
-	// 59: 47 58 60 61
-	// 60: 48 59 49 61
+	// 1:  0  12 2  13		13: 1  24 14 25		25: 13 36 26 37		37: 25 48 38 49		49: 37 60 50 61
+	// 2:  0  1  3  14		14: 2  13 15 26		26: 14 25 27 38		38: 26 37 39 50		50: 38 49 51 61
+	// 3:  0  2  4  15		15: 3  14 16 27		27: 15 26 27 39		39: 27 38 40 51		51: 39 50 52 61
+	// 4:  0  3  5  16		16: 4  15 17 28		28: 16 27 27 40		40: 28 39 41 52		52: 40 51 53 61
+	// 5:  0  4  6  17		17: 5  16 18 29		29: 17 28 27 41		41: 29 40 42 53		53: 41 52 54 61
+	// 6:  0  5  7  18		18: 6  17 19 30		30: 18 29 27 42		42: 30 41 43 54		54: 42 53 55 61
+	// 7:  0  6  8  19		19: 7  18 20 31		31: 19 30 27 43		43: 31 41 44 55		55: 43 54 56 61
+	// 8:  0  7  9  20		20: 8  19 21 32		32: 20 31 27 44		44: 32 43 45 56		56: 44 55 57 61
+	// 9:  0  8  10 21		21: 9  20 22 33		33: 21 32 27 45		45: 33 44 46 57		57: 45 56 58 61
+	// 10: 0  9  11 22		22: 10 21 23 34		34: 22 33 27 46		46: 34 45 47 58		58: 46 57 59 61
+	// 11: 0  10 12 23		23: 11 22 24 35		35: 23 34 27 47		47: 35 46 48 59		59: 47 58 60 61
+	// 12: 0  11 1  24		24: 12 23 13 36		36: 24 35 25 48		48: 36 47 37 60		60: 48 59 49 61
 	
 	// 61: 49 50 51 52 53 54 55 56 57 58 59 60
 	
@@ -315,7 +288,7 @@ int set_initial_conditions()
 		MuscleCompresionStopFraction[i] = 0.6;
 		ContractionOnOff[i] = 0;
 		ContractionTimer[i] = 0.0;
-		ActionPotentialSpeed[i] = 0.5;
+		ActionPotentialSpeed[i] = 0.2;
 		ActionPotentialDuration[i] = ActionPotentialSpeed[i]/MuscleLength[i];
 		ContractionDuration[i] = 100.0;
 		RelaxationDuration[i] = 200.0;
@@ -382,33 +355,6 @@ void draw_picture()
 			
 		}	
 	}
-
-/*	
-	// Drawing muscles
-	glColor3d(1.0,0.0,0.0);
-	for(int i = 0; i < N-1; i++)
-	{
-		glLineWidth(1.0/(Px[i+1]-Px[i]));
-		glBegin(GL_LINES);
-			glVertex3f(Px[i], 0.0, 0.0);
-			glVertex3f(Px[i+1], 0.0, 0.0);
-		glEnd();
-	}
-
-	// Drawing sodium wave front
-	glColor3d(1.0,1.0,0.0);
-	glPushMatrix();
-	glTranslatef(APWaveFront, 0.0, 0.0);
-	glutSolidSphere(0.02,20,20);
-	glPopMatrix();
-	/*	
-	glColor3d(1.0,1.0,0.0);
-	glLineWidth(2.0);
-	glBegin(GL_LINES);
-		glVertex3f(APWaveFront, -0.5, 0.0);
-		glVertex3f(APWaveFront, 0.5, 0.0);
-	glEnd();
-	*/
 	glutSwapBuffers();
 }
 
@@ -455,6 +401,27 @@ void outwardPresure()
 {
 	float f; 
 	float dx, dy, dz, d;
+	float4 centerOfMass;
+	
+	
+	for(int i = 0; i < NUMBER_OF_NODES; i++)
+	{
+		 centerOfMass.x += NodePosition[i].x*NodeMass[i];
+		 centerOfMass.y += NodePosition[i].y*NodeMass[i];
+		 centerOfMass.z += NodePosition[i].z*NodeMass[i];
+		 centerOfMass.w += NodeMass[i];
+	}
+	
+	centerOfMass.x /= centerOfMass.w;
+	centerOfMass.y /= centerOfMass.w;
+	centerOfMass.z /= centerOfMass.w;
+		 
+	for(int i = 0; i < NUMBER_OF_NODES; i++)
+	{
+		 NodePosition[i].x -= centerOfMass.x;
+		 NodePosition[i].y -= centerOfMass.y;
+		 NodePosition[i].z -= centerOfMass.z;
+	}
 	
 	// Getting forces on the nodes from the presure of the blood pushing out	
 	for(int i = 0; i < NUMBER_OF_NODES; i++)
@@ -508,9 +475,16 @@ int contractionForces(float dt, float time)
 					{
 						MuscleColor[muscleNumber].x = 1.0;
 						MuscleColor[muscleNumber].y = 1.0;
+						MuscleColor[muscleNumber].z = 1.0;
+					}
+					else
+					{
+						MuscleColor[muscleNumber].x = 1.0;
+						MuscleColor[muscleNumber].y = 0.0;
 						MuscleColor[muscleNumber].z = 0.0;
 					}
-					else if(ContractionTimer[muscleNumber] < ContractionDuration[muscleNumber])
+					
+					if(ContractionTimer[muscleNumber] < ContractionDuration[muscleNumber])
 					{
 						dx = NodePosition[nodeNumber].x - NodePosition[i].x;
 						dy = NodePosition[nodeNumber].y - NodePosition[i].y;
@@ -520,10 +494,6 @@ int contractionForces(float dt, float time)
 						NodeForce[i].x   += ContractionStrength[muscleNumber]*dx/d;
 						NodeForce[i].y   += ContractionStrength[muscleNumber]*dy/d;
 						NodeForce[i].z   += ContractionStrength[muscleNumber]*dz/d;
-						
-						MuscleColor[muscleNumber].x = 1.0;
-						MuscleColor[muscleNumber].y = 0.0;
-						MuscleColor[muscleNumber].z = 1.0;
 					
 						ContractionTimer[muscleNumber] += dt;
 					}
@@ -533,18 +503,10 @@ int contractionForces(float dt, float time)
 						NodeForce[i].y   += 0.0;
 						NodeForce[i].z   += 0.0;
 						
-						MuscleColor[muscleNumber].x = 0.0;
-						MuscleColor[muscleNumber].y = 0.0;
-						MuscleColor[muscleNumber].z = 1.0;
-						
 						ContractionTimer[muscleNumber] += dt;
 					}
 					else
 					{
-						MuscleColor[muscleNumber].x = 1.0;
-						MuscleColor[muscleNumber].y = 0.0;
-						MuscleColor[muscleNumber].z = 0.0;
-						
 						ContractionOnOff[muscleNumber] = 0;
 						ContractionTimer[muscleNumber] = 0.0;
 					}
@@ -603,6 +565,11 @@ int n_body()
 			beatTimer = 0.0;
 		}
 		else beatTimer += DT;
+		
+		if((750.0 - DT/2.0 < time) && (time < 750 + DT/2.0))
+		{
+			turnOnNodeMuscles(31);
+		}
 		
 		// Zeroing out the nodal forces.
 		for(int i = 0; i < NUMBER_OF_NODES; i++)
