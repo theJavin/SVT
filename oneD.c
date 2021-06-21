@@ -49,7 +49,7 @@ float ContractionTime[N-1];
 float ContractionDuration[N-1]; // 100.0 is a good value
 float RelaxationDuration[N-1]; // 200.0 is a good value
 
-float BeatPeriod = 400.0;
+float BeatPeriod = 1000.0;
 
 float Viscosity = 10.0;
 float AttachmentLeft, AttachmentRight;
@@ -57,7 +57,6 @@ float AttachmentLeft, AttachmentRight;
 void set_initial_conditions()
 {
 	float centerX = FiberLength*(N+1)/2.0;
-	AttachmentLeft = 0.0 - centerX;
 	
 	// Node Values
 	for(int i = 0; i < N; i++)
