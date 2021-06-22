@@ -32,7 +32,7 @@ float FiberLength = 0.1;
 float FiberStrength = 10.0;
 float FiberCompressionMultiplier = 10.0;
 float FiberTentionMultiplier = 10.0;
-float FiberCompressionStopFraction = 0.6;
+float FiberCompressionStopFraction = 0.7;
 
 float TendonLength = 0.1;
 float TendonStrength = 1.0;
