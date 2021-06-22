@@ -7,6 +7,7 @@
 
 // Fiber length 100 micrometers or 0.1 millimeters
 // Sodium wave speed .5 meters/sec or 0.5 millimeters/millisec
+
 #include <GL/glut.h>
 #include <math.h>
 #include <stdio.h>
@@ -29,15 +30,15 @@ float Px[N], Vx[N], Fx[N], Mass[N];
 
 float FiberLength = 0.1;
 float FiberStrength = 10.0;
-float FiberCompresionMultiplier = 10.0;
+float FiberCompressionMultiplier = 10.0;
 float FiberTentionMultiplier = 10.0;
-float FiberCompresionStopFraction = 0.6;
+float FiberCompressionStopFraction = 0.6;
 
 float TendonLength = 0.1;
 float TendonStrength = 1.0;
-float TendonCompresionMultiplier = 10.0;
+float TendonCompressionMultiplier = 10.0;
 float TendonTentionMultiplier = 10.0;
-float TendonCompresionStopFraction = 0.6;
+float TendonCompressionStopFraction = 0.7;
 
 float APWaveSpeed[N]; //0.5 is a good value.
 float APWaveFront;
@@ -49,7 +50,7 @@ float ContractionTime[N-1];
 float ContractionDuration[N-1]; // 100.0 is a good value
 float RelaxationDuration[N-1]; // 200.0 is a good value
 
-float BeatPeriod = 1000.0;
+float BeatPeriod = 400.0;
 
 float Viscosity = 10.0;
 float AttachmentLeft, AttachmentRight;
@@ -57,6 +58,7 @@ float AttachmentLeft, AttachmentRight;
 void set_initial_conditions()
 {
 	float centerX = FiberLength*(N+1)/2.0;
+	AttachmentLeft = 0.0 - centerX;
 	
 	// Node Values
 	for(int i = 0; i < N; i++)
@@ -150,9 +152,9 @@ void generalMuscleForces()
 	{
 		dx = Px[i+1]-Px[i];
 		d  = sqrt(dx*dx);
-		if(d < FiberCompresionStopFraction*FiberLength)
+		if(d < FiberCompressionStopFraction*FiberLength)
 		{
-			f  = FiberStrength*FiberCompresionMultiplier*(d - FiberLength);
+			f  = FiberStrength*FiberCompressionMultiplier*(d - FiberLength);
 		}
 		else if(d < FiberLength)
 		{
@@ -169,9 +171,9 @@ void generalMuscleForces()
 	
 	dx = AttachmentLeft-Px[0];
 	d  = sqrt(dx*dx);
-	if(d < TendonCompresionStopFraction*TendonLength)
+	if(d < TendonCompressionStopFraction*TendonLength)
 	{
-		f  = TendonStrength*TendonCompresionMultiplier*(d - TendonLength);
+		f  = TendonStrength*TendonCompressionMultiplier*(d - TendonLength);
 	}
 	else if(d < FiberLength)
 	{
@@ -185,9 +187,9 @@ void generalMuscleForces()
 	
 	dx = AttachmentRight-Px[N-1];
 	d  = sqrt(dx*dx);
-	if(d < TendonCompresionStopFraction*FiberLength)
+	if(d < TendonCompressionStopFraction*FiberLength)
 	{
-		f  = TendonStrength*TendonCompresionMultiplier*(d - TendonLength);
+		f  = TendonStrength*TendonCompressionMultiplier*(d - TendonLength);
 	}
 	else if(d < FiberLength)
 	{
