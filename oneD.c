@@ -31,7 +31,7 @@ float Px[N], Vx[N], Fx[N], Mass[N];
 float FiberLength = 0.1;
 float FiberStrength = 10.0;
 float FiberCompressionMultiplier = 10.0;
-float FiberTentionMultiplier = 10.0;
+float FiberTensionMultiplier = 10.0;
 float FiberCompressionStopFraction = 0.7;
 
 float TendonLength = 0.1;
@@ -93,11 +93,22 @@ void draw_picture()
 	// Drawing nodes
 	for(int i = 0; i < N; i++)
 	{
-		glColor3d(1.0,1.0,1.0);
-		glPushMatrix();
-		glTranslatef(Px[i], 0.0, 0.0);
-		glutSolidSphere(0.005,20,20);
-		glPopMatrix();	
+		if (i%3 == 0)
+		{
+			glColor3d(1.0,1.0,1.0);
+			glPushMatrix();
+			glTranslatef(Px[i], 0.0, 0.0);
+			glutSolidSphere(0.005,20,20);
+			glPopMatrix();
+		}	
+		else
+		{
+			glColor3d(1.0,1.0,1.0);
+			glPushMatrix();
+			glTranslatef(Px[i+1], 0.0, 0.0);
+			glutSolidSphere(0.005,20,20);
+			glPopMatrix();
+		}
 	}
 	
 	// Drawing muscles
@@ -162,7 +173,7 @@ void generalMuscleForces()
 		}
 		else
 		{
-			f  = FiberStrength*FiberTentionMultiplier*(d - FiberLength);
+			f  = FiberStrength*FiberTensionMultiplier*(d - FiberLength);
 		}
 		
 		Fx[i]   += f*dx/d;
