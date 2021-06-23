@@ -20,10 +20,10 @@
 #define YWindowSize 2000 
 
 #define STOP_TIME 60000.0
-#define DT  0.001
+#define DT  0.0001
 #define N 10
 	
-#define DRAW 1000
+#define DRAW 400
 
 // Globals
 float Px[N], Vx[N], Fx[N], Mass[N];
@@ -50,7 +50,7 @@ float ContractionTime[N-1];
 float ContractionDuration[N-1]; // 100.0 is a good value
 float RelaxationDuration[N-1]; // 200.0 is a good value
 
-float BeatPeriod = 400.0;
+float BeatPeriod = 500.0;
 
 float Viscosity = 10.0;
 float AttachmentLeft, AttachmentRight;
@@ -72,16 +72,22 @@ void set_initial_conditions()
 	for(int i = 0; i < N-1; i++)
 	{	
 		APWaveSpeed[i] = 0.01;
-		RelaxationDuration[i] = 200.0;
-		ContractionStrength[i] = 5.0;
+		RelaxationDuration[i] = 300.0;
 		ContractionDuration[i] = 100.0;
+		ContractionStrength[i] = 5.0;
+		/*
+		if (i%3 == 0)
+		{
+			ContractionStrength[i] = 7*0.2;
+		}
+		else
+		{
+			ContractionStrength[i] = 7*0.1;
+		}
+		*/
 	}
 	
-	RelaxationDuration[3] = 400.0;
-	RelaxationDuration[4] = 400.0;
-	RelaxationDuration[5] = 400.0;
-	RelaxationDuration[6] = 400.0;
-	
+
 	AttachmentRight = (float)(N+1)*FiberLength - centerX;
 }
 
@@ -93,6 +99,14 @@ void draw_picture()
 	// Drawing nodes
 	for(int i = 0; i < N; i++)
 	{
+		
+		glColor3d(1.0,1.0,1.0);
+		glPushMatrix();
+		glTranslatef(Px[i], 0.0, 0.0);
+		glutSolidSphere(0.005,20,20);
+		glPopMatrix();
+
+		/*
 		if (i%3 == 0)
 		{
 			glColor3d(1.0,1.0,1.0);
@@ -109,6 +123,7 @@ void draw_picture()
 			glutSolidSphere(0.005,20,20);
 			glPopMatrix();
 		}
+		*/
 	}
 	
 	// Drawing muscles
