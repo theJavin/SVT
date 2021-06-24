@@ -21,7 +21,8 @@
 
 #define STOP_TIME 60000.0
 #define DT  0.0001
-#define N 100
+#define N 200
+#define TOOSMALL 0.000001
 	
 #define DRAW 1000
 
@@ -51,7 +52,7 @@ float ContractionTime[N-1];
 float ContractionDuration[N-1]; // 100.0 is a good value
 float RelaxationDuration[N-1]; // 200.0 is a good value
 
-float BeatPeriod = 500.0;
+float BeatPeriod = 400.0;
 
 float Viscosity = 10.0;
 float AttachmentLeft, AttachmentRight;
@@ -78,7 +79,7 @@ void set_initial_conditions()
 	for(int i = 0; i < N-1; i++)
 	{	
 		APWaveSpeed[i] = 0.01;
-		RelaxationDuration[i] = 300.0;
+		RelaxationDuration[i] = 200.0;
 		ContractionDuration[i] = 100.0;
 		ContractionStrength[i] = 2*FiberLength;
 	}
@@ -182,9 +183,14 @@ void generalMuscleForces()
 		{
 			f  = FiberStrength*FiberTensionMultiplier*(d - FiberLength);
 		}
-		
+		if (d<TOOSMALL)
+		{
+			printf("\n1 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
+			exit(0);
+		}
 		Fx[i]   += f*dx/d;
 		Fx[i+1] -= f*dx/d;
+		
 	}
 	
 	dx = AttachmentLeft-Px[0];
@@ -201,6 +207,11 @@ void generalMuscleForces()
 	{
 		f  = TendonStrength*TendonTentionMultiplier*(d - TendonLength);
 	}
+	if (d<TOOSMALL)
+		{
+			printf("\n2 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
+			exit(0);
+		}
 	Fx[0]   += f*dx/d;
 	
 	dx = AttachmentRight-Px[N-1];
@@ -217,6 +228,11 @@ void generalMuscleForces()
 	{
 		f  = TendonStrength*TendonTentionMultiplier*(d - TendonLength);
 	}
+	if (d<TOOSMALL)
+		{
+			printf("\n3 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
+			exit(0);
+		}
 	Fx[N-1]   += f*dx/d;
 }
 
@@ -233,6 +249,11 @@ int contractionForces(float dt, float time)
 	{
 		if(Px[i] <= APWaveFront && APWaveFront < Px[i+1])
 		{
+			if (Px[i+1]-Px[i]<TOOSMALL)
+			{
+				printf("\nNodes are getting dangerously close func(ContractionForces)\n");
+				exit(0);
+			}	
 			ratio = (APWaveFront - Px[i])/(Px[i+1]-Px[i]);
 			aPWaveFrontInMuscle = i;
 			if(ContractionOn[i] == 0)
