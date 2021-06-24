@@ -352,7 +352,7 @@ int contractionForces(float dt, float time)
 	int muscleNumber, nodeNumber;
 	
 	// Getting forces for the muscle fiber contraction
-	for(int i = 0; i < NUMBER_OF_NODES; i++)
+	for(int i = 0; i < NUMBER_OF_NODES; i++) 
 	{
 		for(int j = 0; j < LINKS_PER_NODE; j++)
 		{
