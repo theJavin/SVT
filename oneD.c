@@ -16,28 +16,30 @@
 
 #define PI 3.141592654
 
-#define XWindowSize 2000
-#define YWindowSize 2000 
+#define XWindowSize 1000
+#define YWindowSize 1000 
 
 #define STOP_TIME 60000.0
-#define DT  0.001
-#define N 10
+#define DT  0.0001
+#define N 200
+#define TOOSMALL 0.000001
 	
 #define DRAW 1000
 
 // Globals
 float Px[N], Vx[N], Fx[N], Mass[N];
 
-float FiberLength = 0.1;
+float centerX;
+float FiberLength;
 float FiberStrength = 10.0;
 float FiberCompressionMultiplier = 10.0;
-float FiberTentionMultiplier = 10.0;
-float FiberCompressionStopFraction = 0.6;
+float FiberTensionMultiplier = 10.0;
+float FiberCompressionStopFraction = 0.7;
 
 float TendonLength = 0.1;
 float TendonStrength = 1.0;
 float TendonCompressionMultiplier = 10.0;
-float TendonTentionMultiplier = 10.0;
+float TendonTentionMultiplier = 1.0;
 float TendonCompressionStopFraction = 0.7;
 
 float APWaveSpeed[N]; //0.5 is a good value.
@@ -57,9 +59,14 @@ float AttachmentLeft, AttachmentRight;
 
 void set_initial_conditions()
 {
-	float centerX = FiberLength*(N+1)/2.0;
+	centerX = FiberLength*(N+1)/2.0;
 	AttachmentLeft = 0.0 - centerX;
-	
+	FiberLength = 2.0/(N+1);
+
+	//float centerX = 1.0;
+	//AttachmentLeft = 0.0;
+
+
 	// Node Values
 	for(int i = 0; i < N; i++)
 	{
@@ -73,16 +80,11 @@ void set_initial_conditions()
 	{	
 		APWaveSpeed[i] = 0.01;
 		RelaxationDuration[i] = 200.0;
-		ContractionStrength[i] = 5.0;
 		ContractionDuration[i] = 100.0;
+		ContractionStrength[i] = 2*FiberLength;
 	}
-	
-	RelaxationDuration[3] = 400.0;
-	RelaxationDuration[4] = 400.0;
-	RelaxationDuration[5] = 400.0;
-	RelaxationDuration[6] = 400.0;
-	
 	AttachmentRight = (float)(N+1)*FiberLength - centerX;
+	//AttachmentRight = 2;
 }
 
 void draw_picture()
@@ -93,11 +95,31 @@ void draw_picture()
 	// Drawing nodes
 	for(int i = 0; i < N; i++)
 	{
+		
 		glColor3d(1.0,1.0,1.0);
 		glPushMatrix();
 		glTranslatef(Px[i], 0.0, 0.0);
 		glutSolidSphere(0.005,20,20);
-		glPopMatrix();	
+		glPopMatrix();
+
+		/*
+		if (i%3 == 0)
+		{
+			glColor3d(1.0,1.0,1.0);
+			glPushMatrix();
+			glTranslatef(Px[i], 0.0, 0.0);
+			glutSolidSphere(0.005,20,20);
+			glPopMatrix();
+		}	
+		else
+		{
+			glColor3d(1.0,1.0,1.0);
+			glPushMatrix();
+			glTranslatef(Px[i+1], 0.0, 0.0);
+			glutSolidSphere(0.005,20,20);
+			glPopMatrix();
+		}
+		*/
 	}
 	
 	// Drawing muscles
@@ -128,9 +150,6 @@ void draw_picture()
 	// Drawing sodium wave front
 	glColor3d(1.0,1.0,0.0);
 	glPushMatrix();
-	glTranslatef(APWaveFront, 0.0, 0.0);
-	glutSolidSphere(0.02,20,20);
-	glPopMatrix();
 	/*	
 	glColor3d(1.0,1.0,0.0);
 	glLineWidth(2.0);
@@ -162,11 +181,16 @@ void generalMuscleForces()
 		}
 		else
 		{
-			f  = FiberStrength*FiberTentionMultiplier*(d - FiberLength);
+			f  = FiberStrength*FiberTensionMultiplier*(d - FiberLength);
 		}
-		
+		if (d<TOOSMALL)
+		{
+			printf("\n1 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
+			exit(0);
+		}
 		Fx[i]   += f*dx/d;
 		Fx[i+1] -= f*dx/d;
+		
 	}
 	
 	dx = AttachmentLeft-Px[0];
@@ -183,6 +207,11 @@ void generalMuscleForces()
 	{
 		f  = TendonStrength*TendonTentionMultiplier*(d - TendonLength);
 	}
+	if (d<TOOSMALL)
+		{
+			printf("\n2 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
+			exit(0);
+		}
 	Fx[0]   += f*dx/d;
 	
 	dx = AttachmentRight-Px[N-1];
@@ -199,6 +228,11 @@ void generalMuscleForces()
 	{
 		f  = TendonStrength*TendonTentionMultiplier*(d - TendonLength);
 	}
+	if (d<TOOSMALL)
+		{
+			printf("\n3 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
+			exit(0);
+		}
 	Fx[N-1]   += f*dx/d;
 }
 
@@ -215,6 +249,11 @@ int contractionForces(float dt, float time)
 	{
 		if(Px[i] <= APWaveFront && APWaveFront < Px[i+1])
 		{
+			if (Px[i+1]-Px[i]<TOOSMALL)
+			{
+				printf("\nNodes are getting dangerously close func(ContractionForces)\n");
+				exit(0);
+			}	
 			ratio = (APWaveFront - Px[i])/(Px[i+1]-Px[i]);
 			aPWaveFrontInMuscle = i;
 			if(ContractionOn[i] == 0)
@@ -359,7 +398,7 @@ void control()
 
 void Display(void)
 {
-	gluLookAt(0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	gluLookAt(1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
