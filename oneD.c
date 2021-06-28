@@ -21,10 +21,10 @@
 
 #define STOP_TIME 60000.0
 #define DT  0.0001
-#define N 200
+#define N 100
 #define TOOSMALL 0.000001
 	
-#define DRAW 1000
+#define DRAW 100
 
 // Globals
 float Px[N], Vx[N], Fx[N], Mass[N];
@@ -150,6 +150,9 @@ void draw_picture()
 	// Drawing sodium wave front
 	glColor3d(1.0,1.0,0.0);
 	glPushMatrix();
+	glTranslatef(APWaveFront, 0.0, 0.0);
+	glutSolidSphere(0.005,20,20);
+	glPopMatrix();
 	/*	
 	glColor3d(1.0,1.0,0.0);
 	glLineWidth(2.0);
