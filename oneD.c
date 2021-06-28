@@ -24,7 +24,7 @@
 #define N 2000
 #define TOOSMALL 0.000001
 	
-#define DRAW 100
+#define DRAW 1000
 
 // Globals
 float Px[N], Vx[N], Fx[N], Mass[N];
@@ -102,7 +102,7 @@ void draw_picture()
 		glColor3d(1.0,1.0,1.0);
 		glPushMatrix();
 		glTranslatef(Px[i], 0.0, 0.0);
-		glutSolidSphere(0.5/N,20,20);
+		glutSolidSphere(50.0/N,20,20);
 		glPopMatrix();
 
 		/*
