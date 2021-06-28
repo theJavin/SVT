@@ -21,10 +21,10 @@
 
 #define STOP_TIME 60000.0
 #define DT  0.0001
-#define N 200
+#define N 2000
 #define TOOSMALL 0.000001
 	
-#define DRAW 1000
+#define DRAW 100
 
 // Globals
 float Px[N], Vx[N], Fx[N], Mass[N];
@@ -46,6 +46,7 @@ float APWaveSpeed[N]; //0.5 is a good value.
 float APWaveFront;
 int APWaveAmunity;
 
+float TotalMuscleLength;
 float ContractionStrength[N-1]; // 5.0 is a good value
 int ContractionOn[N-1];
 float ContractionTime[N-1];
@@ -59,9 +60,11 @@ float AttachmentLeft, AttachmentRight;
 
 void set_initial_conditions()
 {
+	TotalMuscleLength = 200.0; //This is in millimeters
 	centerX = FiberLength*(N+1)/2.0;
 	AttachmentLeft = 0.0 - centerX;
-	FiberLength = 2.0/(N+1);
+	FiberLength = TotalMuscleLength/(N+1);
+
 
 	//float centerX = 1.0;
 	//AttachmentLeft = 0.0;
@@ -99,7 +102,7 @@ void draw_picture()
 		glColor3d(1.0,1.0,1.0);
 		glPushMatrix();
 		glTranslatef(Px[i], 0.0, 0.0);
-		glutSolidSphere(0.005,20,20);
+		glutSolidSphere(0.5/N,20,20);
 		glPopMatrix();
 
 		/*
@@ -186,7 +189,7 @@ void generalMuscleForces()
 		if (d<TOOSMALL)
 		{
 			printf("\n1 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
-			exit(0);
+			//exit(0);
 		}
 		Fx[i]   += f*dx/d;
 		Fx[i+1] -= f*dx/d;
@@ -398,7 +401,7 @@ void control()
 
 void Display(void)
 {
-	gluLookAt(1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	gluLookAt(100.0, 0.0, 100.0, 100.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -415,7 +418,7 @@ void reshape(int w, int h)
 
 	glLoadIdentity();
 
-	glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 80.0);
+	glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 100.0);
 
 	glMatrixMode(GL_MODELVIEW);
 }
