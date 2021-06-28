@@ -21,10 +21,10 @@
 
 #define STOP_TIME 60000.0
 #define DT  0.0001
-#define N 2000
+#define N 10
 #define TOOSMALL 0.000001
 	
-#define DRAW 1000
+#define DRAW 10
 
 // Globals
 float Px[N], Vx[N], Fx[N], Mass[N];
