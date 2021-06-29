@@ -21,10 +21,10 @@
 
 #define STOP_TIME 60000.0
 #define DT  0.0001
-#define N 100
+#define N 2000
 #define TOOSMALL 0.000001
 	
-#define DRAW 100
+#define DRAW 1000
 
 // Globals
 float Px[N], Vx[N], Fx[N], Mass[N];
@@ -61,7 +61,7 @@ void set_initial_conditions()
 {
 	centerX = FiberLength*(N+1)/2.0;
 	AttachmentLeft = 0.0 - centerX;
-	FiberLength = 2.0/(N+1);
+	FiberLength = 200.0/(N+1);
 
 	//float centerX = 1.0;
 	//AttachmentLeft = 0.0;
@@ -78,7 +78,7 @@ void set_initial_conditions()
 	// Muscle (connector) Values
 	for(int i = 0; i < N-1; i++)
 	{	
-		APWaveSpeed[i] = 0.01;
+		APWaveSpeed[i] = 1.0;
 		RelaxationDuration[i] = 200.0;
 		ContractionDuration[i] = 100.0;
 		ContractionStrength[i] = 2*FiberLength;
@@ -99,7 +99,7 @@ void draw_picture()
 		glColor3d(1.0,1.0,1.0);
 		glPushMatrix();
 		glTranslatef(Px[i], 0.0, 0.0);
-		glutSolidSphere(0.005,20,20);
+		glutSolidSphere(50.0/N,20,20);
 		glPopMatrix();
 
 		/*
@@ -126,7 +126,7 @@ void draw_picture()
 	glColor3d(1.0,0.0,0.0);
 	for(int i = 0; i < N-1; i++)
 	{
-		glLineWidth(1.0/(Px[i+1]-Px[i]));
+		glLineWidth(100.0/(Px[i+1]-Px[i]));
 		glBegin(GL_LINES);
 			glVertex3f(Px[i], 0.0, 0.0);
 			glVertex3f(Px[i+1], 0.0, 0.0);
@@ -151,7 +151,7 @@ void draw_picture()
 	glColor3d(1.0,1.0,0.0);
 	glPushMatrix();
 	glTranslatef(APWaveFront, 0.0, 0.0);
-	glutSolidSphere(0.005,20,20);
+	glutSolidSphere(50.0/N,20,20);
 	glPopMatrix();
 	/*	
 	glColor3d(1.0,1.0,0.0);
@@ -401,7 +401,7 @@ void control()
 
 void Display(void)
 {
-	gluLookAt(1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	gluLookAt(100.0, 0.0, 100.0, 100.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -418,7 +418,7 @@ void reshape(int w, int h)
 
 	glLoadIdentity();
 
-	glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 80.0);
+	glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 120.0);
 
 	glMatrixMode(GL_MODELVIEW);
 }
