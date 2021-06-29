@@ -1,9 +1,9 @@
-// nvcc SVT.cu -o svt -lglut -lm -lGLU -lGL
-//To stop hit "control c" in the window you launched it from.
+// nvcc SVT2.0.cu -o svt2.0 -lglut -lm -lGLU -lGL
+//To stop hit "control c" in the window you launched it from. stuff
 
 // Length will be in millimeters
 // Time will be in milliseconds
-// Mass will be in... mass units?
+// Mass will be in ???
 
 // Fiber length 100 micrometers or 0.1 millimeters
 // Sodium wave speed .5 meters/sec or 0.5 millimeters/millisec
@@ -69,7 +69,7 @@ int contractionForces(float, float);
 void dampingForce();
 void moveNodes(float, float);
 void ectopicEvents(float, float);
-int n_body(float);
+void n_body(float);
 void control();
 void mymouse(int, int, int, int);
 void Display(void);
@@ -308,7 +308,7 @@ void outwardPresure()
 	centerOfMass.x /= centerOfMass.w;
 	centerOfMass.y /= centerOfMass.w;
 	centerOfMass.z /= centerOfMass.w;
-		 
+		 DrawRate
 	for(int i = 0; i < NUMBER_OF_NODES; i++)
 	{
 		 NodePosition[i].x -= centerOfMass.x;
@@ -405,7 +405,7 @@ int contractionForces(float dt, float time)
 							glutSolidSphere(0.03,20,20);
 							glPopMatrix();
 							glutSwapBuffers();
-							while(1);
+							exit(0);
 						}
 						
 						NodeForce[i].x   += ContractionStrength[muscleNumber]*dx/d;
@@ -468,22 +468,28 @@ void moveNodes(float dt, float time)  // LeapFrog
 	}
 }
 
-int n_body(float dt)
-{
-	int   tdraw = 0; 
-	double time = 0.0;
-	float beatTimer = 0.0;
+int   DrawTimer = 0; 
+double RunTime = 0.0;
+float BeatTimer = 0.0;
 	
-	while(time < STOP_TIME)
+void n_body(float dt)
+{
+	//int   tdraw = 0; 
+	//double time = 0.0;
+	//float beatTimer = 0.0;
+	
+	float callBackTime = 0.0;
+	
+	while(callBackTime < 3.0)
 	{
-		if(BeatPeriod <= beatTimer)
+		if(BeatPeriod <= BeatTimer)
 		{
 			turnOnNodeMuscles(0);
-			beatTimer = 0.0;
+			BeatTimer = 0.0;
 		}
-		else beatTimer += dt;
+		else BeatTimer += dt;
 		
-		ectopicEvents(time, dt);
+		ectopicEvents(RunTime, dt);
 		
 		// Zeroing out the nodal forces.
 		for(int i = 0; i < NUMBER_OF_NODES; i++)
@@ -495,25 +501,31 @@ int n_body(float dt)
 		
 		generalMuscleForces();
 		
-		contractionForces(dt, time);
+		contractionForces(dt, RunTime);
 		
 		outwardPresure();
 		
 		dampingForce();
 		
-		moveNodes(dt, time);
+		moveNodes(dt, RunTime);
 
-		if(tdraw == DrawRate) 
+		if(DrawTimer == DrawRate) 
 		{
 			draw_picture();
-			tdraw = 0;
-			printf("\n Time = %f", time);
+			DrawTimer = 0;
+			printf("\n RunTime = %f", RunTime);
 		}
-		else tdraw++;
+		else DrawTimer++;
 		
-		time += dt;
+		RunTime += dt;
+		
+		draw_picture();
+		
+		callBackTime += dt;
+		
+		//printf("\n n_body \n");
+		//printf("\n RunTime = %f", RunTime);
 	}
-	return(1);
 }
 
 void ablatedNodes()
@@ -573,26 +585,19 @@ void ectopicEvents(float time, float dt)
 	}
 }
 
-void control()
-{	
-	
-	//initializeNodesAndLinksSphere62();
-	//initializeNodesAndLinksSphere266();
+void init()
+{
 	initializeNodesAndLinksSphere(24);
 	
 	linkNodesToMuscles();
 	setMuscleAtributesAndNodeMasses();
 	ablatedNodes();
-	
-	draw_picture();
-	
 	DrawRate = 1000;
 	BeatPeriod = 100;
 	
-	if(n_body(DT) == 1) printf("\n N-body success \n");
+	draw_picture();
 	
-	printf("\n DONE \n");
-	while(1);
+	printf("\n init done \n");
 }
 
 // Window globals
@@ -626,8 +631,20 @@ void Display(void)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glutSwapBuffers();
 	glFlush();
-	control();
+	printf("\n Display 1");
+	//n_body(DT);
+	//control();
+	printf("\n Display 2");
+	printf("\n Display 2");
 }
+
+void idle()
+{
+printf("\n Idle 1");
+	n_body(DT);
+	printf("\n Idle 2");
+}
+
 
 void reshape(int w, int h)
 {
@@ -641,6 +658,7 @@ void reshape(int w, int h)
 
 	glMatrixMode(GL_MODELVIEW);
 }
+
 
 int main(int argc, char** argv)
 {
@@ -672,6 +690,8 @@ int main(int argc, char** argv)
 	glEnable(GL_DEPTH_TEST);
 	glutDisplayFunc(Display);
 	glutReshapeFunc(reshape);
+	glutIdleFunc(idle);
+	init();
 	glutMainLoop();
 	return 0;
 }

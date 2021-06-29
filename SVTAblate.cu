@@ -1,9 +1,9 @@
-// nvcc SVT.cu -o svt -lglut -lm -lGLU -lGL
-//To stop hit "control c" in the window you launched it from.
+// nvcc SVTAblate.cu -o svtAblate -lglut -lm -lGLU -lGL
+//To stop hit "control c" in the window you launched it from. stuff
 
 // Length will be in millimeters
 // Time will be in milliseconds
-// Mass will be in... mass units?
+// Mass will be in ???
 
 // Fiber length 100 micrometers or 0.1 millimeters
 // Sodium wave speed .5 meters/sec or 0.5 millimeters/millisec
@@ -24,6 +24,29 @@
 #define LINKS_PER_NODE 24 //24
 
 // Globals
+int XWindowSize = 1000;
+int YWindowSize = 1000; 
+
+// Clip plains
+double Near = 0.2;
+double Far = 80.0;
+
+//Direction here your eye is located location
+double EyeX = 0.0;
+double EyeY = 0.0;
+double EyeZ = 2.0;
+
+//Where you are looking
+double CenterX = 0.0;
+double CenterY = 0.0;
+double CenterZ = 0.0;
+
+//Up vector for viewing
+double UpX = 0.0;
+double UpY = 1.0;
+double UpZ = 0.0;
+
+static int Window;
 int DrawRate;
 
 float4 NodePosition[NUMBER_OF_NODES], NodeVelocity[NUMBER_OF_NODES], NodeForce[NUMBER_OF_NODES];
@@ -61,7 +84,7 @@ void initializeNodesAndLinksSphere62();
 void linkNodesToMuscles();
 void setMuscleAtributesAndNodeMasses();
 void ablatedNodes();
-void draw_picture();
+void drawPicture();
 void generalMuscleForces();
 void outwardPresure();
 void turnOnNodeMuscles(int);
@@ -76,6 +99,109 @@ void Display(void);
 void reshape(int, int);
 
 #include "./setNodesAndLinks.h"
+
+/*
+double x_machine_to_x_screen(int x)
+{
+	return( (2.0*x)/X_WINDOW-1.0 );
+}
+
+double y_machine_to_y_screen(int y)
+{
+	return( -(2.0*y)/Y_WINDOW+1.0 );
+}
+
+double x_machine_to_x_world(int x)
+{
+	double range;
+	range = X_MAX - X_MIN;
+	return( (range/X_WINDOW)*x + X_MIN);
+}
+
+double y_machine_to_y_world(int y)
+{
+	double range;
+	range = Y_MAX - Y_MIN;
+	return(-((range/Y_WINDOW)*y - X_MAX));
+}
+
+double x_world_to_x_screen(double x)
+{
+	double range;
+	range = X_MAX - X_MIN;
+	return( -1.0 + 2.0*(x - X_MIN)/range );
+}
+
+double y_world_to_y_screen(double y)
+{
+	double range;
+	range = Y_MAX - Y_MIN;
+	return( -1.0 + 2.0*(y - Y_MIN)/range );
+}
+*/
+
+void mymouse(int button, int state, int x, int y)
+{	
+	float myX, myY;
+	int index = -1;
+	
+	if(state == GLUT_DOWN)
+	{
+		if(button == GLUT_LEFT_BUTTON)
+		{
+			//printf("\nLeft mouse button down");
+			//printf("\nmouse x = %d mouse y = %d\n", x, y);
+			
+			myX = 2.0*x/XWindowSize - 1.0;
+			myY = -2.0*y/YWindowSize + 1.0;
+			//printf("\n myX = %f myY = %f\n", myX, myY);
+			
+			glColor3d(0.0,0.0,1.0);
+			glPushMatrix();
+			glTranslatef(myX, myY, 0.0);
+			glutSolidSphere(0.03,20,20);
+			glPopMatrix();
+			glutSwapBuffers();
+			
+			for(int i = 0; i < NUMBER_OF_NODES; i++)
+			{
+				if(myX - 0.01 < NodePosition[i].x && NodePosition[i].x < myX + 0.01 && myY - 0.01 < NodePosition[i].y && NodePosition[i].y < myY + 0.01)
+				{
+					if(index == -1)
+					{
+						index = i;
+					}
+					else
+					{
+						if(NodePosition[index].z < NodePosition[i].z)
+						{
+							index = i;
+						}
+					}
+				}
+			}
+			if(index != -1)
+			{
+				if(NodeAblatedYesNo[index] == 0)
+				{
+					NodeAblatedYesNo[index] = 1;
+				}
+				else
+				{
+					NodeAblatedYesNo[index] = 0;
+				}
+			}
+		}
+		else
+		{
+			//printf("\nRight mouse button down");
+			//printf("\nmouse x = %d mouse y = %d\n", x, y);
+			drawPicture();
+		}
+		//printf("\nSNx = %f SNy = %f SNz = %f\n", NodePosition[0].x, NodePosition[0].y, NodePosition[0].z);
+	}
+	//drawPicture();
+}
 
 void linkNodesToMuscles()
 {
@@ -176,7 +302,7 @@ void setMuscleAtributesAndNodeMasses()
 	}
 }
 
-void draw_picture()
+void drawPicture()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -196,7 +322,7 @@ void draw_picture()
 		}
 		else
 		{
-			glColor3d(1.0,1.0,1.0);
+			glColor3d(1.0,0.0,1.0);
 		}
 		glPushMatrix();
 		glTranslatef(NodePosition[i].x, NodePosition[i].y, NodePosition[i].z);
@@ -304,7 +430,7 @@ void outwardPresure()
 		 centerOfMass.z += NodePosition[i].z*NodeMass[i];
 		 centerOfMass.w += NodeMass[i];
 	}
-
+	
 	centerOfMass.x /= centerOfMass.w;
 	centerOfMass.y /= centerOfMass.w;
 	centerOfMass.z /= centerOfMass.w;
@@ -505,7 +631,7 @@ int n_body(float dt)
 
 		if(tdraw == DrawRate) 
 		{
-			draw_picture();
+			drawPicture();
 			tdraw = 0;
 			printf("\n Time = %f", time);
 		}
@@ -530,7 +656,7 @@ void ablatedNodes()
 		//NodeAblatedYesNo[i] = 1;
 	}
 	
-	
+	/*
 	NodeAblatedYesNo[1] = 1;
 	NodeAblatedYesNo[13] = 1;
 	NodeAblatedYesNo[25] = 1;
@@ -550,7 +676,7 @@ void ablatedNodes()
 	NodeAblatedYesNo[11] = 1;
 	NodeAblatedYesNo[14] = 1;
 	NodeAblatedYesNo[17] = 1;
-	
+	*/
 }
 
 void ectopicEvents(float time, float dt)
@@ -584,43 +710,189 @@ void control()
 	setMuscleAtributesAndNodeMasses();
 	ablatedNodes();
 	
-	draw_picture();
+	drawPicture();
 	
 	DrawRate = 1000;
 	BeatPeriod = 100;
 	
-	if(n_body(DT) == 1) printf("\n N-body success \n");
+	//if(n_body(DT) == 1) printf("\n N-body success \n");
 	
 	printf("\n DONE \n");
-	while(1);
+	//while(1);
 }
 
-// Window globals
-int XWindowSize = 1000;
-int YWindowSize = 1000; 
-
-// Clip plains
-double Near = 0.2;
-double Far = 80.0;
-
-//Direction here your eye is located location
-double EyeX = 0.0;
-double EyeY = 2.0;
-double EyeZ = 2.0;
-
-//Where you are looking
-double CenterX = 0.0;
-double CenterY = 0.0;
-double CenterZ = 0.0;
-
-//Up vector for viewing
-double UpX = 0.0;
-double UpY = 1.0;
-double UpZ = 0.0;
+void KeyPressed(unsigned char key, int x, int y)
+{
+	float dAngle = 0.01;
+	float zoom = 0.01;
+	float4 lookVector;
+	float d;
+	float4 centerOfMass;
+	
+	lookVector.x = CenterX - EyeX;
+	lookVector.y = CenterY - EyeY;
+	lookVector.z = CenterZ - EyeZ;
+	d = sqrt(lookVector.x*lookVector.x + lookVector.y*lookVector.y + lookVector.z*lookVector.z);
+	lookVector.x /= d;
+	lookVector.y /= d;
+	lookVector.z /= d;
+	
+	centerOfMass.x = 0.0;
+	centerOfMass.y = 0.0;
+	centerOfMass.z = 0.0;
+	for(int i = 0; i < NUMBER_OF_NODES; i++)
+	{
+		 centerOfMass.x += NodePosition[i].x*NodeMass[i];
+		 centerOfMass.y += NodePosition[i].y*NodeMass[i];
+		 centerOfMass.z += NodePosition[i].z*NodeMass[i];
+		 centerOfMass.w += NodeMass[i];
+	}
+	centerOfMass.x /= centerOfMass.w;
+	centerOfMass.y /= centerOfMass.w;
+	centerOfMass.z /= centerOfMass.w;
+	
+	
+	if(key == 'q')
+	{
+		glutDestroyWindow(Window);
+		printf("\nw Good Bye\n");
+		exit(0);
+	}
+	if(key == 'x')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].y -= centerOfMass.y;
+			NodePosition[i].z -= centerOfMass.z;
+			NodePosition[i].y = cos(dAngle)*NodePosition[i].y - sin(dAngle)*NodePosition[i].z;
+			NodePosition[i].z = sin(dAngle)*NodePosition[i].y + cos(dAngle)*NodePosition[i].z;
+			NodePosition[i].y += centerOfMass.y;
+			NodePosition[i].z += centerOfMass.z;
+		}
+		drawPicture();
+	}
+	if(key == 'X')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].y -= centerOfMass.y;
+			NodePosition[i].z -= centerOfMass.z;
+			NodePosition[i].y = cos(-dAngle)*NodePosition[i].y - sin(-dAngle)*NodePosition[i].z;
+			NodePosition[i].z = sin(-dAngle)*NodePosition[i].y + cos(-dAngle)*NodePosition[i].z;
+			NodePosition[i].y += centerOfMass.y;
+			NodePosition[i].z += centerOfMass.z;
+		}
+		drawPicture();
+	}
+	if(key == 'y')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x -= centerOfMass.x;
+			NodePosition[i].z -= centerOfMass.z;
+			NodePosition[i].x = cos(dAngle)*NodePosition[i].x + sin(dAngle)*NodePosition[i].z;
+			NodePosition[i].z = -sin(dAngle)*NodePosition[i].x + cos(dAngle)*NodePosition[i].z;
+			NodePosition[i].x += centerOfMass.x;
+			NodePosition[i].z += centerOfMass.z;
+		}
+		drawPicture();
+	}
+	if(key == 'Y')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x -= centerOfMass.x;
+			NodePosition[i].z -= centerOfMass.z;
+			NodePosition[i].x = cos(-dAngle)*NodePosition[i].x + sin(-dAngle)*NodePosition[i].z;
+			NodePosition[i].z = -sin(-dAngle)*NodePosition[i].x + cos(-dAngle)*NodePosition[i].z;
+			NodePosition[i].x += centerOfMass.x;
+			NodePosition[i].z += centerOfMass.z;
+		}
+		drawPicture();
+	}
+	if(key == 'z')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x -= centerOfMass.x;
+			NodePosition[i].y -= centerOfMass.y;
+			NodePosition[i].x = cos(dAngle)*NodePosition[i].x - sin(dAngle)*NodePosition[i].y;
+			NodePosition[i].y = sin(dAngle)*NodePosition[i].x + cos(dAngle)*NodePosition[i].y;
+			NodePosition[i].x += centerOfMass.x;
+			NodePosition[i].y += centerOfMass.y;
+		}
+		drawPicture();
+	}
+	if(key == 'Z')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x -= centerOfMass.x;
+			NodePosition[i].y -= centerOfMass.y;
+			NodePosition[i].x = cos(-dAngle)*NodePosition[i].x - sin(-dAngle)*NodePosition[i].y;
+			NodePosition[i].y = sin(-dAngle)*NodePosition[i].x + cos(-dAngle)*NodePosition[i].y;
+			NodePosition[i].x += centerOfMass.x;
+			NodePosition[i].y += centerOfMass.y;
+		}
+		drawPicture();
+	}
+	if(key == 'w')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x += zoom*lookVector.x;
+			NodePosition[i].y += zoom*lookVector.y;
+			NodePosition[i].z += zoom*lookVector.z;
+		}
+		drawPicture();
+	}
+	if(key == 'W')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x -= zoom*lookVector.x;
+			NodePosition[i].y -= zoom*lookVector.y;
+			NodePosition[i].z -= zoom*lookVector.z;
+		}
+		drawPicture();
+	}
+	
+	if(key == 'o')
+	{
+		centerOfMass.x = 0.0;
+		centerOfMass.y = 0.0;
+		centerOfMass.z = 0.0;
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			 centerOfMass.x += NodePosition[i].x*NodeMass[i];
+			 centerOfMass.y += NodePosition[i].y*NodeMass[i];
+			 centerOfMass.z += NodePosition[i].z*NodeMass[i];
+			 centerOfMass.w += NodeMass[i];
+		}
+		centerOfMass.x /= centerOfMass.w;
+		centerOfMass.y /= centerOfMass.w;
+		centerOfMass.z /= centerOfMass.w;
+		
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x += centerOfMass.x;
+			NodePosition[i].y -= centerOfMass.y;
+			NodePosition[i].z -= centerOfMass.z;
+		}
+		
+		glOrtho(-1.0, 1.0, -1.0, 1.0, 0.2, 80.0);
+		drawPicture();
+	}
+	
+	if(key == 'f')
+	{
+		glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 80.0);
+		drawPicture();
+	}
+}
 
 void Display(void)
 {
-	gluLookAt(EyeX, EyeY, EyeZ, CenterX, CenterY, CenterZ, UpX, UpY, UpZ);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -637,7 +909,9 @@ void reshape(int w, int h)
 
 	glLoadIdentity();
 
-	glFrustum(-0.2, 0.2, -0.2, 0.2, Near, Far);
+	glOrtho(-1.0, 1.0, -1.0, 1.0, Near, Far);
+	
+	//glFrustum(-0.2, 0.2, -0.2, 0.2, Near, Far);
 
 	glMatrixMode(GL_MODELVIEW);
 }
@@ -648,7 +922,7 @@ int main(int argc, char** argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGB);
 	glutInitWindowSize(XWindowSize,YWindowSize);
 	glutInitWindowPosition(0,0);
-	glutCreateWindow("1D Myocardium");
+	Window = glutCreateWindow("Ablate");
 	GLfloat light_position[] = {1.0, 1.0, 1.0, 0.0};
 	GLfloat light_ambient[]  = {0.0, 0.0, 0.0, 1.0};
 	GLfloat light_diffuse[]  = {1.0, 1.0, 1.0, 1.0};
@@ -672,6 +946,10 @@ int main(int argc, char** argv)
 	glEnable(GL_DEPTH_TEST);
 	glutDisplayFunc(Display);
 	glutReshapeFunc(reshape);
+	glutKeyboardFunc(KeyPressed);
+	gluLookAt(EyeX, EyeY, EyeZ, CenterX, CenterY, CenterZ, UpX, UpY, UpZ);
+	glutMouseFunc(mymouse);
+	
 	glutMainLoop();
 	return 0;
 }

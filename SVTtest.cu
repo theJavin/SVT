@@ -1,9 +1,9 @@
-// nvcc SVT.cu -o svt -lglut -lm -lGLU -lGL
-//To stop hit "control c" in the window you launched it from.
+// nvcc SVTtest.cu -o svttest -lglut -lm -lGLU -lGL
+//To stop hit "control c" in the window you launched it from. stuff
 
 // Length will be in millimeters
 // Time will be in milliseconds
-// Mass will be in... mass units?
+// Mass will be in ???
 
 // Fiber length 100 micrometers or 0.1 millimeters
 // Sodium wave speed .5 meters/sec or 0.5 millimeters/millisec
@@ -467,15 +467,15 @@ void moveNodes(float dt, float time)  // LeapFrog
 		NodePosition[i].z += NodeVelocity[i].z*dt;
 	}
 }
-
+	
 int n_body(float dt)
-{
-	int   tdraw = 0; 
+{	
+
+int   tdraw = 0; 
 	double time = 0.0;
 	float beatTimer = 0.0;
-	
-	while(time < STOP_TIME)
-	{
+	//while(time < STOP_TIME)
+	//{
 		if(BeatPeriod <= beatTimer)
 		{
 			turnOnNodeMuscles(0);
@@ -512,7 +512,7 @@ int n_body(float dt)
 		else tdraw++;
 		
 		time += dt;
-	}
+	//}
 	return(1);
 }
 
@@ -589,11 +589,36 @@ void control()
 	DrawRate = 1000;
 	BeatPeriod = 100;
 	
-	if(n_body(DT) == 1) printf("\n N-body success \n");
+	n_body(DT) ;
+	
+	//if(n_body(DT) == 1) printf("\n N-body success \n");
 	
 	printf("\n DONE \n");
-	while(1);
+	//while(1);
 }
+
+
+
+
+
+void KeyPressed(unsigned char key, int x, int y)
+{
+	
+	printf("Key: %c", key);
+	
+	if(key == 'q')
+	{
+		//glutDestroyWindow(Window);
+		printf("\nw Good Bye\n");
+		exit(0);
+	}
+	
+}
+
+
+
+
+
 
 // Window globals
 int XWindowSize = 1000;
@@ -627,6 +652,7 @@ void Display(void)
 	glutSwapBuffers();
 	glFlush();
 	control();
+	printf("Loop");
 }
 
 void reshape(int w, int h)
@@ -636,6 +662,10 @@ void reshape(int w, int h)
 	glMatrixMode(GL_PROJECTION);
 
 	glLoadIdentity();
+	glutDisplayFunc(Display);
+	glutIdleFunc(Display);
+	glutReshapeFunc(reshape);
+	glutKeyboardUpFunc(KeyPressed);
 
 	glFrustum(-0.2, 0.2, -0.2, 0.2, Near, Far);
 
@@ -671,7 +701,9 @@ int main(int argc, char** argv)
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_DEPTH_TEST);
 	glutDisplayFunc(Display);
+	glutIdleFunc(Display);
 	glutReshapeFunc(reshape);
+	glutKeyboardUpFunc(KeyPressed);
 	glutMainLoop();
 	return 0;
 }
