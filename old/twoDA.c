@@ -7,7 +7,6 @@
 
 // Fiber length 100 micrometers or 0.1 millimeters
 // Sodium wave speed .5 meters/sec or 0.5 millimeters/millisec
-
 #include <GL/glut.h>
 #include <math.h>
 #include <stdio.h>
@@ -16,41 +15,35 @@
 
 #define PI 3.141592654
 
-#define XWindowSize 1000
-#define YWindowSize 1000 
+#define XWindowSize 2000
+#define YWindowSize 2000 
 
 #define STOP_TIME 60000.0
-#define DT  0.0001
-<<<<<<< HEAD
-#define N 10
-=======
-#define N 2000
->>>>>>> origin/main
-#define TOOSMALL 0.000001
+#define DT  0.004
+#define N 20
 	
-#define DRAW 10
+#define DRAW 1000
 
 // Globals
 float Px[N], Vx[N], Fx[N], Mass[N];
+float Py[N], Vy[N], Fy[N];
 
-float centerX;
-float FiberLength;
+float FiberLength = 0.1;
 float FiberStrength = 10.0;
-float FiberCompressionMultiplier = 10.0;
-float FiberTensionMultiplier = 10.0;
-float FiberCompressionStopFraction = 0.7;
+float FiberCompresionMultiplier = 10.0;
+float FiberTentionMultiplier = 10.0;
+float FiberCompresionStopFraction = 0.6;
 
 float TendonLength = 0.1;
 float TendonStrength = 1.0;
-float TendonCompressionMultiplier = 10.0;
-float TendonTentionMultiplier = 1.0;
-float TendonCompressionStopFraction = 0.7;
+float TendonCompresionMultiplier = 10.0;
+float TendonTentionMultiplier = 10.0;
+float TendonCompresionStopFraction = 0.6;
 
 float APWaveSpeed[N]; //0.5 is a good value.
-float APWaveFront;
+float APWaveFrontLx, APWaveFrontLy, APWaveFrontRx, APWaveFrontRy;
 int APWaveAmunity;
 
-float TotalMuscleLength;
 float ContractionStrength[N-1]; // 5.0 is a good value
 int ContractionOn[N-1];
 float ContractionTime[N-1];
@@ -60,134 +53,99 @@ float RelaxationDuration[N-1]; // 200.0 is a good value
 float BeatPeriod = 400.0;
 
 float Viscosity = 10.0;
-float AttachmentLeft, AttachmentRight;
+
+float Radius = 2.0;
+float CentralPush = 5.0;
 
 void set_initial_conditions()
 {
-	TotalMuscleLength = 200.0; //This is in millimeters
-	centerX = FiberLength*(N+1)/2.0;
-	AttachmentLeft = 0.0 - centerX;
-<<<<<<< HEAD
-	FiberLength = TotalMuscleLength/(N+1);
-
-=======
-	FiberLength = 200.0/(N+1);
->>>>>>> origin/main
-
-	//float centerX = 1.0;
-	//AttachmentLeft = 0.0;
-
-
 	// Node Values
 	for(int i = 0; i < N; i++)
 	{
 		Mass[i] = 1.0;
-		Px[i] = (float)(i+1)*FiberLength - centerX;
-		Vx[i] = 0.0;	
+		//Px[i] = (float)(i+1)*FiberLength - centerX;
+		//Px[i] = (float)(i+1)*FiberLength - centerX;
+		Px[i] = Radius*cos((float)i*2.0*PI/(float)N+PI/2.0);
+		Py[i] = Radius*sin((float)i*2.0*PI/(float)N+PI/2.0);
+		Vx[i] = 0.0;
+		Vy[i] = 0.0;	
 	}
 	
 	// Muscle (connector) Values
 	for(int i = 0; i < N-1; i++)
 	{	
-		APWaveSpeed[i] = 1.0;
+		APWaveSpeed[i] = 0.02;
 		RelaxationDuration[i] = 200.0;
+		ContractionStrength[i] = 5.0;
 		ContractionDuration[i] = 100.0;
-		ContractionStrength[i] = 2*FiberLength;
 	}
-	AttachmentRight = (float)(N+1)*FiberLength - centerX;
-	//AttachmentRight = 2;
+	
+	//RelaxationDuration[3] = 400.0;
+	//RelaxationDuration[4] = 400.0;
+	//RelaxationDuration[5] = 400.0;
+	//RelaxationDuration[6] = 400.0;
 }
 
 void draw_picture()
 {
+	float d, dx, dy;
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	
 	// Drawing nodes
 	for(int i = 0; i < N; i++)
 	{
-		
 		glColor3d(1.0,1.0,1.0);
 		glPushMatrix();
-		glTranslatef(Px[i], 0.0, 0.0);
-		glutSolidSphere(50.0/N,20,20);
-		glPopMatrix();
-
-		/*
-		if (i%3 == 0)
-		{
-			glColor3d(1.0,1.0,1.0);
-			glPushMatrix();
-			glTranslatef(Px[i], 0.0, 0.0);
-			glutSolidSphere(0.005,20,20);
-			glPopMatrix();
-		}	
-		else
-		{
-			glColor3d(1.0,1.0,1.0);
-			glPushMatrix();
-			glTranslatef(Px[i+1], 0.0, 0.0);
-			glutSolidSphere(0.005,20,20);
-			glPopMatrix();
-		}
-		*/
+		glTranslatef(Px[i], Py[i], 0.0);
+		glutSolidSphere(0.005,20,20);
+		glPopMatrix();	
 	}
 	
 	// Drawing muscles
 	glColor3d(1.0,0.0,0.0);
 	for(int i = 0; i < N-1; i++)
 	{
-		glLineWidth(100.0/(Px[i+1]-Px[i]));
+		dx = Px[i+1]-Px[i];
+		dy = Py[i+1]-Py[i];
+		d = sqrt(dx*dx + dy*dy)
+		glLineWidth(1.0/d);
 		glBegin(GL_LINES);
 			glVertex3f(Px[i], 0.0, 0.0);
 			glVertex3f(Px[i+1], 0.0, 0.0);
 		glEnd();
 	}
-	
-	// Drawing Tendons
-	glColor3d(1.0,1.0,1.0);
-	glLineWidth(1.0/(Px[0]-AttachmentLeft));
-	glBegin(GL_LINES);
-		glVertex3f(AttachmentLeft, 0.0, 0.0);
-		glVertex3f(Px[0], 0.0, 0.0);
-	glEnd();
-	
-	glLineWidth(1.0/(AttachmentRight - Px[N-1]));
-	glBegin(GL_LINES);
-		glVertex3f(Px[N-1], 0.0, 0.0);
-		glVertex3f(AttachmentRight, 0.0, 0.0);
-	glEnd();
 
-	// Drawing sodium wave front
-	glColor3d(1.0,1.0,0.0);
+	// Drawing sodium wave fronts
+	glColor3d(0.0,0.0,1.0);
 	glPushMatrix();
-	glTranslatef(APWaveFront, 0.0, 0.0);
-	glutSolidSphere(50.0/N,20,20);
+	glTranslatef(APWaveFrontLx, APWaveFrontLy, 0.0);
+	glutSolidSphere(0.005,20,20);
 	glPopMatrix();
-	/*	
-	glColor3d(1.0,1.0,0.0);
-	glLineWidth(2.0);
-	glBegin(GL_LINES);
-		glVertex3f(APWaveFront, -0.5, 0.0);
-		glVertex3f(APWaveFront, 0.5, 0.0);
-	glEnd();
-	*/
+	
+	glColor3d(0.0,0.0,1.0);
+	glPushMatrix();
+	glTranslatef(APWaveFrontRx, APWaveFrontRy, 0.0);
+	glutSolidSphere(0.005,20,20);
+	glPopMatrix();
+	
 	glutSwapBuffers();
 }
 
 void generalMuscleForces()
 {
 	float f; 
-	float dx,d;
+	float dx,dy,d;
 	
 	// Getting forces for the muscle fiber without contraction	
 	for(int i = 0; i < N-1; i++)
 	{
 		dx = Px[i+1]-Px[i];
-		d  = sqrt(dx*dx);
-		if(d < FiberCompressionStopFraction*FiberLength)
+		dy = Py[i+1]-Py[i];
+		d = sqrt(dx*dx + dy*dy)
+		if(d < FiberCompresionStopFraction*FiberLength)
 		{
-			f  = FiberStrength*FiberCompressionMultiplier*(d - FiberLength);
+			f  = FiberStrength*FiberCompresionMultiplier*(d - FiberLength);
 		}
 		else if(d < FiberLength)
 		{
@@ -195,92 +153,43 @@ void generalMuscleForces()
 		}
 		else
 		{
-			f  = FiberStrength*FiberTensionMultiplier*(d - FiberLength);
+			f  = FiberStrength*FiberTentionMultiplier*(d - FiberLength);
 		}
-		if (d<TOOSMALL)
-		{
-			printf("\n1 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
-			//exit(0);
-		}
+		
 		Fx[i]   += f*dx/d;
 		Fx[i+1] -= f*dx/d;
-		
+		Fy[i]   += f*dy/d;
+		Fy[i+1] -= f*dy/d;
 	}
-	
-	dx = AttachmentLeft-Px[0];
-	d  = sqrt(dx*dx);
-	if(d < TendonCompressionStopFraction*TendonLength)
-	{
-		f  = TendonStrength*TendonCompressionMultiplier*(d - TendonLength);
-	}
-	else if(d < FiberLength)
-	{
-		f  = TendonStrength*(d - FiberLength);
-	}
-	else
-	{
-		f  = TendonStrength*TendonTentionMultiplier*(d - TendonLength);
-	}
-	if (d<TOOSMALL)
-		{
-			printf("\n2 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
-			exit(0);
-		}
-	Fx[0]   += f*dx/d;
-	
-	dx = AttachmentRight-Px[N-1];
-	d  = sqrt(dx*dx);
-	if(d < TendonCompressionStopFraction*FiberLength)
-	{
-		f  = TendonStrength*TendonCompressionMultiplier*(d - TendonLength);
-	}
-	else if(d < FiberLength)
-	{
-		f  = TendonStrength*(d - TendonLength);
-	}
-	else
-	{
-		f  = TendonStrength*TendonTentionMultiplier*(d - TendonLength);
-	}
-	if (d<TOOSMALL)
-		{
-			printf("\n3 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
-			exit(0);
-		}
-	Fx[N-1]   += f*dx/d;
 }
 
 int contractionForces(float dt, float time)
 {
 	float f; 
-	float dx,d;
+	float dx,dy,d;
+	int flag;
 	float ratio;
 	int aPWaveFrontInMuscle;
 	
-	// Checking which muscle the APWaveFront is in, turning on that muscle if it is ready, finding its ratio in so we can properly place it in the moving muscle.
-	aPWaveFrontInMuscle = -1;
+	// Checking the sodium wave location.
 	for(int i = 0; i < N-1; i++)
 	{
-		if(Px[i] <= APWaveFront && APWaveFront < Px[i+1])
+		if(Px[i] <= APWaveFrontLx && APWaveFrontLx < Px[i+1])
 		{
-			if (Px[i+1]-Px[i]<TOOSMALL)
+			if(Py[i] <= APWaveFrontLy && APWaveFrontLy < Py[i+1])
 			{
-				printf("\nNodes are getting dangerously close func(ContractionForces)\n");
-				exit(0);
-			}	
-			ratio = (APWaveFront - Px[i])/(Px[i+1]-Px[i]);
-			aPWaveFrontInMuscle = i;
-			if(ContractionOn[i] == 0)
-			{
-				ContractionOn[i] = 1;
-				APWaveAmunity = i;
+				if((APWaveFrontLy-Py[i])*(Px[i+1]-Px[i]) - (APWaveFrontLx-Px[i])*(Py[i+1]-Py[i]))
+				{
+					ratio = (APWaveFront - Px[i])/(Px[i+1]-Px[i]);
+					aPWaveFrontInMuscle = i;
+					if(ContractionOn[i] == 0)
+					{
+						ContractionOn[i] = 1;
+						APWaveAmunity = i;
+					}
+				}
 			}
 		}
-	}
-	
-	if(APWaveAmunity != aPWaveFrontInMuscle)
-	{
-		aPWaveFrontInMuscle = -1;
 	}
 	
 	// Getting forces for the muscle fiber contraction
@@ -324,13 +233,13 @@ int contractionForces(float dt, float time)
 	}
 	
 	// Moving sodium wave front
-	if(aPWaveFrontInMuscle == -1)
+	if(flag == -1)
 	{
 		APWaveFront = AttachmentLeft;
 	}
 	else
 	{
-		APWaveFront = Px[aPWaveFrontInMuscle] + (Px[aPWaveFrontInMuscle+1]-Px[aPWaveFrontInMuscle])*ratio + APWaveSpeed[aPWaveFrontInMuscle]*DT;
+		APWaveFront = Px[flag] + (Px[flag+1]-Px[flag])*ratio + APWaveSpeed[flag]*DT;
 	}
 }
 
@@ -345,7 +254,8 @@ int n_body()
 		ContractionOn[i] = 0;
 		ContractionTime[i] = 0.0;
 	}
-	APWaveFront = Px[0];
+	APWaveFrontLx = Px[0];
+	APWaveFrontLy = Py[0];
 	APWaveAmunity = -1;
 	
 	while(time < STOP_TIME)
@@ -354,12 +264,14 @@ int n_body()
 		for(int i = 0; i < N; i++)
 		{
 			Fx[i] = 0.0;
+			Fy[i] = 0.0;
 		}
 	
 		// Adding some damping to the system.
 		for(int i = 0; i < N; i++)
 		{	
 			Fx[i]   += -Viscosity*Vx[i];
+			Fy[i]   += -Viscosity*Vy[i];
 		}
 		
 		generalMuscleForces();
@@ -379,7 +291,10 @@ int n_body()
 		
 		if(BeatPeriod < beatTimer)
 		{
-			APWaveFront = Px[0];
+			APWaveFrontLx = Px[0];
+			APWaveFrontLy = Py[0];
+			APWaveFrontRx = Px[0];
+			APWaveFrontRy = Py[0];
 			beatTimer = 0.0;
 		}
 		else
@@ -412,7 +327,7 @@ void control()
 
 void Display(void)
 {
-	gluLookAt(100.0, 0.0, 100.0, 100.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	gluLookAt(0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -429,11 +344,7 @@ void reshape(int w, int h)
 
 	glLoadIdentity();
 
-<<<<<<< HEAD
-	glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 100.0);
-=======
-	glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 120.0);
->>>>>>> origin/main
+	glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 80.0);
 
 	glMatrixMode(GL_MODELVIEW);
 }
