@@ -1,4 +1,4 @@
-// nvcc SVT.cu -o svt -lglut -lm -lGLU -lGL
+// nvcc SVT3.0.cu -o svt3.0 -lglut -lm -lGLU -lGL
 //To stop hit "control c" in the window you launched it from. stuff
 
 // Length will be in millimeters
@@ -25,6 +25,7 @@
 
 // Globals
 int DrawRate;
+int Pause;
 
 float4 NodePosition[NUMBER_OF_NODES], NodeVelocity[NUMBER_OF_NODES], NodeForce[NUMBER_OF_NODES];
 float NodeMass[NUMBER_OF_NODES];
@@ -56,12 +57,32 @@ float ContractionStrength[NUMBER_OF_MUSCLES]; // 5.0 is a good value
 float BloodPresure;
 float BeatPeriod;
 
+int   DrawTimer; 
+float RunTime;
+float BeatTimer;
+
+// Window globals
+static int Window;
+int XWindowSize;
+int YWindowSize; 
+double Near;
+double Far;
+double EyeX;
+double EyeY;
+double EyeZ;
+double CenterX;
+double CenterY;
+double CenterZ;
+double UpX;
+double UpY;
+double UpZ;
+
 // Prototyping functions
 void initializeNodesAndLinksSphere62();
 void linkNodesToMuscles();
 void setMuscleAtributesAndNodeMasses();
 void ablatedNodes();
-void draw_picture();
+void drawPicture();
 void generalMuscleForces();
 void outwardPresure();
 void turnOnNodeMuscles(int);
@@ -69,8 +90,8 @@ int contractionForces(float, float);
 void dampingForce();
 void moveNodes(float, float);
 void ectopicEvents(float, float);
-int n_body(float);
-void control();
+void n_body(float);
+void setup();
 void mymouse(int, int, int, int);
 void Display(void);
 void reshape(int, int);
@@ -176,7 +197,7 @@ void setMuscleAtributesAndNodeMasses()
 	}
 }
 
-void draw_picture()
+void drawPicture()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -257,6 +278,8 @@ void generalMuscleForces()
 				{
 					printf("\n TSU Error: In generalMuscleForces d is very small between nodeNumbers = %d %d seperation = %f. Take a look at this\n", i, nodeNumber, d);
 					glColor3d(0.0,0.0,1.0);
+					
+					// put this in to see where the problem occured.
 					glPushMatrix();
 					glTranslatef(NodePosition[i].x, NodePosition[i].y, NodePosition[i].z);
 					glutSolidSphere(0.03,20,20);
@@ -308,20 +331,22 @@ void outwardPresure()
 	centerOfMass.x /= centerOfMass.w;
 	centerOfMass.y /= centerOfMass.w;
 	centerOfMass.z /= centerOfMass.w;
-		 
+	
+	/*	 
 	for(int i = 0; i < NUMBER_OF_NODES; i++)
 	{
 		 NodePosition[i].x -= centerOfMass.x;
 		 NodePosition[i].y -= centerOfMass.y;
 		 NodePosition[i].z -= centerOfMass.z;
 	}
+	*/
 	
 	// Getting forces on the nodes from the presure of the blood pushing out	
 	for(int i = 0; i < NUMBER_OF_NODES; i++)
 	{
-		dx = 0.0 - NodePosition[i].x;
-		dy = 0.0 - NodePosition[i].y;
-		dz = 0.0 - NodePosition[i].z;
+		dx = centerOfMass.x - NodePosition[i].x;
+		dy = centerOfMass.y - NodePosition[i].y;
+		dz = centerOfMass.z - NodePosition[i].z;
 		d  = sqrt(dx*dx + dy*dy + dz*dz);
 		if(d < 0.0001) 
 		{
@@ -392,6 +417,8 @@ int contractionForces(float dt, float time)
 						dy = NodePosition[nodeNumber].y - NodePosition[i].y;
 						dz = NodePosition[nodeNumber].z - NodePosition[i].z;
 						d  = sqrt(dx*dx + dy*dy + dz*dz);
+						
+						// put this in to see where the problem occured.
 						if(d < 0.00001) 
 						{
 							printf("\n TSU Error: In contractionForces d is very small between nodeNumbers = %d %d seperation = %f. Take a look at this\n", i, nodeNumber, d);
@@ -468,22 +495,18 @@ void moveNodes(float dt, float time)  // LeapFrog
 	}
 }
 
-int n_body(float dt)
-{
-	int   tdraw = 0; 
-	double time = 0.0;
-	float beatTimer = 0.0;
-	
-	while(time < STOP_TIME)
+void n_body(float dt)
+{	
+	if(Pause != 1)
 	{
-		if(BeatPeriod <= beatTimer)
+		if(BeatPeriod <= BeatTimer)
 		{
 			turnOnNodeMuscles(0);
-			beatTimer = 0.0;
+			BeatTimer = 0.0;
 		}
-		else beatTimer += dt;
+		else BeatTimer += dt;
 		
-		ectopicEvents(time, dt);
+		ectopicEvents(RunTime, dt);
 		
 		// Zeroing out the nodal forces.
 		for(int i = 0; i < NUMBER_OF_NODES; i++)
@@ -495,25 +518,24 @@ int n_body(float dt)
 		
 		generalMuscleForces();
 		
-		contractionForces(dt, time);
+		contractionForces(dt, RunTime);
 		
 		outwardPresure();
 		
 		dampingForce();
 		
-		moveNodes(dt, time);
+		moveNodes(dt, RunTime);
 
-		if(tdraw == DrawRate) 
+		if(DrawTimer == DrawRate) 
 		{
-			draw_picture();
-			tdraw = 0;
-			printf("\n Time = %f", time);
+			drawPicture();
+			DrawTimer = 0;
+			printf("\n Time = %f", RunTime);
 		}
-		else tdraw++;
+		else DrawTimer++;
 		
-		time += dt;
+		RunTime += dt;
 	}
-	return(1);
 }
 
 void ablatedNodes()
@@ -573,82 +595,397 @@ void ectopicEvents(float time, float dt)
 	}
 }
 
-void control()
+void setup()
 {	
-	
-	//initializeNodesAndLinksSphere62();
-	//initializeNodesAndLinksSphere266();
 	initializeNodesAndLinksSphere(24);
 	
 	linkNodesToMuscles();
+	
 	setMuscleAtributesAndNodeMasses();
+	
 	ablatedNodes();
 	
-	draw_picture();
+	drawPicture();
 	
 	DrawRate = 1000;
 	BeatPeriod = 100;
-	
-	if(n_body(DT) == 1) printf("\n N-body success \n");
-	
-	printf("\n DONE \n");
-	while(1);
+	DrawTimer = 0; 
+	RunTime = 0.0;
+	BeatTimer = 0.0;
+	Pause = 0;
 }
 
-// Window globals
-int XWindowSize = 1000;
-int YWindowSize = 1000; 
+void KeyPressed(unsigned char key, int x, int y)
+{
+	float dAngle = 0.01;
+	float zoom = 0.01;
+	float temp;
+	float4 lookVector;
+	float d;
+	float4 centerOfMass;
+	
+	lookVector.x = CenterX - EyeX;
+	lookVector.y = CenterY - EyeY;
+	lookVector.z = CenterZ - EyeZ;
+	d = sqrt(lookVector.x*lookVector.x + lookVector.y*lookVector.y + lookVector.z*lookVector.z);
+	lookVector.x /= d;
+	lookVector.y /= d;
+	lookVector.z /= d;
+	
+	centerOfMass.x = 0.0;
+	centerOfMass.y = 0.0;
+	centerOfMass.z = 0.0;
+	for(int i = 0; i < NUMBER_OF_NODES; i++)
+	{
+		 centerOfMass.x += NodePosition[i].x*NodeMass[i];
+		 centerOfMass.y += NodePosition[i].y*NodeMass[i];
+		 centerOfMass.z += NodePosition[i].z*NodeMass[i];
+		 centerOfMass.w += NodeMass[i];
+	}
+	centerOfMass.x /= centerOfMass.w;
+	centerOfMass.y /= centerOfMass.w;
+	centerOfMass.z /= centerOfMass.w;
+	
+	
+	if(key == 'q')
+	{
+		glutDestroyWindow(Window);
+		printf("\nw Good Bye\n");
+		exit(0);
+	}
+	if(key == 'x')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].y -= centerOfMass.y;
+			NodePosition[i].z -= centerOfMass.z;
+			temp 			   = cos(dAngle)*NodePosition[i].y - sin(dAngle)*NodePosition[i].z;
+			NodePosition[i].z  = sin(dAngle)*NodePosition[i].y + cos(dAngle)*NodePosition[i].z;
+			NodePosition[i].y  = temp;
+			NodePosition[i].y += centerOfMass.y;
+			NodePosition[i].z += centerOfMass.z;
+		}
+		drawPicture();
+	}
+	if(key == 'X')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].y -= centerOfMass.y;
+			NodePosition[i].z -= centerOfMass.z;
+			temp			   = cos(-dAngle)*NodePosition[i].y - sin(-dAngle)*NodePosition[i].z;
+			NodePosition[i].z  = sin(-dAngle)*NodePosition[i].y + cos(-dAngle)*NodePosition[i].z;
+			NodePosition[i].y  = temp; 
+			NodePosition[i].y += centerOfMass.y;
+			NodePosition[i].z += centerOfMass.z;
+		}
+		drawPicture();
+	}
+	if(key == 'y')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x -= centerOfMass.x;
+			NodePosition[i].z -= centerOfMass.z;
+			temp			   = cos(dAngle)*NodePosition[i].x + sin(dAngle)*NodePosition[i].z;
+			NodePosition[i].z  = -sin(dAngle)*NodePosition[i].x + cos(dAngle)*NodePosition[i].z;
+			NodePosition[i].x  = temp;
+			NodePosition[i].x += centerOfMass.x;
+			NodePosition[i].z += centerOfMass.z;
+		}
+		drawPicture();
+	}
+	if(key == 'Y')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x -= centerOfMass.x;
+			NodePosition[i].z -= centerOfMass.z;
+			temp			   = cos(-dAngle)*NodePosition[i].x + sin(-dAngle)*NodePosition[i].z;
+			NodePosition[i].z  = -sin(-dAngle)*NodePosition[i].x + cos(-dAngle)*NodePosition[i].z;
+			NodePosition[i].x  = temp;
+			NodePosition[i].x += centerOfMass.x;
+			NodePosition[i].z += centerOfMass.z;
+		}
+		drawPicture();
+	}
+	if(key == 'z')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x -= centerOfMass.x;
+			NodePosition[i].y -= centerOfMass.y;
+			temp			   = cos(dAngle)*NodePosition[i].x - sin(dAngle)*NodePosition[i].y;
+			NodePosition[i].y  = sin(dAngle)*NodePosition[i].x + cos(dAngle)*NodePosition[i].y;
+			NodePosition[i].x  = temp;
+			NodePosition[i].x += centerOfMass.x;
+			NodePosition[i].y += centerOfMass.y;
+		}
+		drawPicture();
+	}
+	if(key == 'Z')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x -= centerOfMass.x;
+			NodePosition[i].y -= centerOfMass.y;
+			temp			   = cos(-dAngle)*NodePosition[i].x - sin(-dAngle)*NodePosition[i].y;
+			NodePosition[i].y  = sin(-dAngle)*NodePosition[i].x + cos(-dAngle)*NodePosition[i].y;
+			NodePosition[i].x  = temp;
+			NodePosition[i].x += centerOfMass.x;
+			NodePosition[i].y += centerOfMass.y;
+		}
+		drawPicture();
+	}
+	if(key == 'w')
+	{
+		printf("\n look x y z %f  %f  %f", lookVector.x, lookVector.y, lookVector.z);
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x += zoom*lookVector.x;
+			NodePosition[i].y += zoom*lookVector.y;
+			NodePosition[i].z += zoom*lookVector.z;
+		}
+		drawPicture();
+	}
+	if(key == 'W')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x -= zoom*lookVector.x;
+			NodePosition[i].y -= zoom*lookVector.y;
+			NodePosition[i].z -= zoom*lookVector.z;
+		}
+		drawPicture();
+	}
+	
+	if(key == 'o')
+	{
+		centerOfMass.x = 0.0;
+		centerOfMass.y = 0.0;
+		centerOfMass.z = 0.0;
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			 centerOfMass.x += NodePosition[i].x*NodeMass[i];
+			 centerOfMass.y += NodePosition[i].y*NodeMass[i];
+			 centerOfMass.z += NodePosition[i].z*NodeMass[i];
+			 centerOfMass.w += NodeMass[i];
+		}
+		centerOfMass.x /= centerOfMass.w;
+		centerOfMass.y /= centerOfMass.w;
+		centerOfMass.z /= centerOfMass.w;
+		
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x += centerOfMass.x;
+			NodePosition[i].y -= centerOfMass.y;
+			NodePosition[i].z -= centerOfMass.z;
+		}
+		
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(-1.0, 1.0, -1.0, 1.0, 0.2, 80.0);
+		glMatrixMode(GL_MODELVIEW);
+		drawPicture();
+	}
+	if(key == 'f')
+	{
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 80.0);
+		glMatrixMode(GL_MODELVIEW);
+		drawPicture();
+	}
+	
+	if(key == 'p')
+	{
+		Pause = 1;
+	}
+	if(key == 'r')
+	{
+		Pause = 0;
+	}
+	
+	if(key == 'c')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x -= centerOfMass.x;
+			NodePosition[i].y -= centerOfMass.y;
+			NodePosition[i].z -= centerOfMass.z;
+		}
+		drawPicture();
+	}
+	
+	if(key == 'n')
+	{
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			NodePosition[i].x -= centerOfMass.x;
+			NodePosition[i].y -= centerOfMass.y;
+			NodePosition[i].z -= centerOfMass.z;
+		}
+		
+		if(0.0 < NodePosition[0].x)
+		{
+			dAngle = atan(NodePosition[0].z/NodePosition[0].x);
+		}
+		else
+		{
+			dAngle = -atan(NodePosition[0].z/NodePosition[0].x);
+		}
+		
+		for(int i = 0; i < NUMBER_OF_NODES; i++)
+		{
+			temp 			  = cos(dAngle)*(double)NodePosition[i].x + sin(dAngle)*(double)NodePosition[i].z;
+			NodePosition[i].z = -sin(dAngle)*(double)NodePosition[i].x + cos(dAngle)*(double)NodePosition[i].z;
+			NodePosition[i].x = temp;
+		}
+		
+		if(0.0 < NodePosition[0].x)
+		{
+			dAngle = PI/2.0 - atan(NodePosition[0].y/NodePosition[0].x);
+			for(int i = 0; i < NUMBER_OF_NODES; i++)
+			{
+				temp			   = cos(dAngle)*NodePosition[i].x - sin(dAngle)*NodePosition[i].y;
+				NodePosition[i].y  = sin(dAngle)*NodePosition[i].x + cos(dAngle)*NodePosition[i].y;
+				NodePosition[i].x  = temp;
+			}
+		}
+		else if(NodePosition[0].x < 0.0)
+		{
+			dAngle = -(PI/2.0 - atan(NodePosition[0].y/NodePosition[0].x));
+			for(int i = 0; i < NUMBER_OF_NODES; i++)
+			{
+				temp			   = cos(-dAngle)*NodePosition[i].x - sin(-dAngle)*NodePosition[i].y;
+				NodePosition[i].y  = sin(-dAngle)*NodePosition[i].x + cos(-dAngle)*NodePosition[i].y;
+				NodePosition[i].x  = temp;
+			}
+		}
+		drawPicture();
+		printf("\n look x y z of 0 %f  %f  %f", NodePosition[0].x, NodePosition[0].y, NodePosition[0].z);
+	}
+	
+}
 
-// Clip plains
-double Near = 0.2;
-double Far = 80.0;
-
-//Direction here your eye is located location
-double EyeX = 0.0;
-double EyeY = 2.0;
-double EyeZ = 2.0;
-
-//Where you are looking
-double CenterX = 0.0;
-double CenterY = 0.0;
-double CenterZ = 0.0;
-
-//Up vector for viewing
-double UpX = 0.0;
-double UpY = 1.0;
-double UpZ = 0.0;
+void mymouse(int button, int state, int x, int y)
+{	
+	float myX, myY;
+	int index = -1;
+	
+	if(state == GLUT_DOWN)
+	{
+		if(button == GLUT_LEFT_BUTTON)
+		{
+			printf("\n Left mouse button down");
+			printf("\n mouse x = %d mouse y = %d\n", x, y);
+			
+			myX = 2.0*x/XWindowSize - 1.0;
+			myY = -2.0*y/YWindowSize + 1.0;
+			printf("\n myX = %f myY = %f\n", myX, myY);
+			
+			printf("\n SNX = %f SNY = %f SNZ = %f\n", NodePosition[0].x, NodePosition[0].y, NodePosition[0].z);
+			
+			glColor3d(0.0,0.0,1.0);
+			glPushMatrix();
+				glTranslatef(myX, myY, 0.0);
+				glutSolidSphere(0.03,20,20);
+			glPopMatrix();
+			glutSwapBuffers();
+			
+			for(int i = 0; i < NUMBER_OF_NODES; i++)
+			{
+				if(myX - 0.03 < NodePosition[i].x && NodePosition[i].x < myX + 0.03 && myY - 0.03 < NodePosition[i].y && NodePosition[i].y < myY + 0.03)
+				{
+					if(index == -1)
+					{
+						index = i;
+					}
+					else
+					{
+						if(NodePosition[index].z < NodePosition[i].z)
+						{
+							index = i;
+						}
+					}
+					//drawPicture();
+				}
+			}
+			if(index != -1)
+			{
+				if(NodeAblatedYesNo[index] == 0)
+				{
+					NodeAblatedYesNo[index] = 1;
+				}
+				else
+				{
+					NodeAblatedYesNo[index] = 0;
+				}
+			}
+		}
+		else
+		{
+			//printf("\nRight mouse button down");
+			//printf("\nmouse x = %d mouse y = %d\n", x, y);
+			drawPicture();
+		}
+		//printf("\nSNx = %f SNy = %f SNz = %f\n", NodePosition[0].x, NodePosition[0].y, NodePosition[0].z);
+	}
+	//drawPicture();
+}
 
 void Display(void)
 {
-	gluLookAt(EyeX, EyeY, EyeZ, CenterX, CenterY, CenterZ, UpX, UpY, UpZ);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glClear(GL_DEPTH_BUFFER_BIT);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glutSwapBuffers();
-	glFlush();
-	control();
+	
+}
+
+void idle()
+{
+	n_body(DT);
 }
 
 void reshape(int w, int h)
 {
 	glViewport(0, 0, (GLsizei) w, (GLsizei) h);
-
-	glMatrixMode(GL_PROJECTION);
-
-	glLoadIdentity();
-
-	glFrustum(-0.2, 0.2, -0.2, 0.2, Near, Far);
-
-	glMatrixMode(GL_MODELVIEW);
 }
 
 int main(int argc, char** argv)
 {
+	XWindowSize = 1000;
+	YWindowSize = 1000; 
+
+	// Clip plains
+	Near = 0.2;
+	Far = 80.0;
+
+	//Direction here your eye is located location
+	EyeX = 0.0;
+	EyeY = 0.0;
+	EyeZ = 2.0;
+
+	//Where you are looking
+	CenterX = 0.0;
+	CenterY = 0.0;
+	CenterZ = 0.0;
+
+	//Up vector for viewing
+	UpX = 0.0;
+	UpY = 1.0;
+	UpZ = 0.0;
+	
 	glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGB);
 	glutInitWindowSize(XWindowSize,YWindowSize);
-	glutInitWindowPosition(0,0);
-	glutCreateWindow("1D Myocardium");
+	glutInitWindowPosition(5,5);
+	Window = glutCreateWindow("SVT");
+	gluLookAt(EyeX, EyeY, EyeZ, CenterX, CenterY, CenterZ, UpX, UpY, UpZ);
+	
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glFrustum(-0.2, 0.2, -0.2, 0.2, Near, Far);
+	glMatrixMode(GL_MODELVIEW);
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	
 	GLfloat light_position[] = {1.0, 1.0, 1.0, 0.0};
 	GLfloat light_ambient[]  = {0.0, 0.0, 0.0, 1.0};
 	GLfloat light_diffuse[]  = {1.0, 1.0, 1.0, 1.0};
@@ -656,7 +993,6 @@ int main(int argc, char** argv)
 	GLfloat lmodel_ambient[] = {0.2, 0.2, 0.2, 1.0};
 	GLfloat mat_specular[]   = {1.0, 1.0, 1.0, 1.0};
 	GLfloat mat_shininess[]  = {10.0};
-	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glShadeModel(GL_SMOOTH);
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
@@ -670,8 +1006,13 @@ int main(int argc, char** argv)
 	glEnable(GL_LIGHT0);
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_DEPTH_TEST);
+	
 	glutDisplayFunc(Display);
 	glutReshapeFunc(reshape);
+	glutMouseFunc(mymouse);
+	glutKeyboardFunc(KeyPressed);
+	glutIdleFunc(idle);
+	setup();
 	glutMainLoop();
 	return 0;
 }

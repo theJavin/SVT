@@ -99,7 +99,7 @@ void initializeNodesAndLinksSphere(int divitions)
 			
 			// Connect to the node to the left
 			if(j == 1)
-			{
+			{NUMBER_OF_MUSCLES
 				NodeLinks[i][j] = (divitions + i - 2)%divitions + 1;
 			}
 			
@@ -182,6 +182,7 @@ void initializeNodesAndLinksSphere(int divitions)
 		NodeLinks[NumberOfNodes - 1][j] =  NumberOfNodes - 1 - divitions + j;
 	}
 	
+	/*
 	for(int i = 0; i < NumberOfNodes; i++)
 	{
 		for(int j = 0; j < LinksPerNode; j++)
@@ -189,6 +190,7 @@ void initializeNodesAndLinksSphere(int divitions)
 			printf("\n NodeLinks[%d][%d] = %d", i, j, NodeLinks[i][j]);
 		}
 	}
-	printf("\n ddd");
+	*/
+	printf("\n Nodes created");
 	//while(1);
 }
