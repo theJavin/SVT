@@ -222,7 +222,7 @@ void setMuscleAttributesAndNodeMasses(int divisions)
 	MassOfAtria = 1.0;
 	MuscleCompresionMultiplier = 50.0;
 	MuscleTentionMultiplier = 50.0;
-	Viscosity = 10.0/divisions;
+	Viscosity = 1.0/divisions;
 	BloodPresureScaling = divisions*(divisions/2 - 1) + 2;  // Set it to the number of nodes for a sphere in both the circle and the sphere simulation. Think about this some more. Hard to have presure in 1D.
 	BloodPresure = 1.0/BloodPresureScaling;
 	CenterOfSimulation.x = 0.0;
@@ -693,8 +693,6 @@ void setup()
 			printf("\n Good Bye. \n");
 			exit(0);
 		}
-		if(divisions%2 != 0)
-		{
 			printf("\n I said the number had to be even!");
 			printf("\n Beem me up Scotty. There is no intelligent life down here. \n");
 			printf("\n Good Bye. \n");
@@ -713,7 +711,7 @@ void setup()
 		printf("\n Good Bye. \n");
 		exit(0);
 	}
-	printf("\n\n The Particle Modeling Group hopes you injoy your simulation.r\n\n");
+	printf("\n\n The Particle Modeling Group hopes you enjoy your simulation.r\n\n");
 	printf("\n The simulation is paused. Move to the mouse over the simulation window and type the following commands.\n");
 	printf("\n To run the simulation type r.");
 	printf("\n To pause the simulation type p.");
