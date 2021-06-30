@@ -10,6 +10,7 @@ void setNodesAndMusclesCircle(int divisions)
 			
 		NodePosition[i].y = sin(PI/2.0 -i*2.0*PI/((float)divisions));
 		NodePosition[i].x = cos(PI/2.0 -i*2.0*PI/((float)divisions));
+		NodePosition[i].z = 0.0;
 	}
 	
 	// Zeroing out velocity and acceleration
@@ -47,6 +48,18 @@ void setNodesAndMusclesCircle(int divisions)
 	// Setting edges for the last node. Closing the loop.
 	NodeLinks[(divisions - 1)*LinksPerNode + 0] =  divisions - 2;
 	NodeLinks[(divisions - 1)*LinksPerNode + 1] =  0;
+	
+	/*
+	for(int i = 0; i < NumberOfNodes; i++)
+	{
+		printf("\n Node Position [%d] = %f  %f  %f", i, NodePosition[i].x, NodePosition[i].y, NodePosition[i].z);
+		for(int j = 0; j < LinksPerNode; j++)
+		{
+			printf("\n NodeLinks[%d][%d] = %d", i, j, NodeLinks[i*LinksPerNode + j]);
+		}
+	}
+	printf("\n Nodes and links created");
+	*/
 }
 
 
@@ -72,7 +85,7 @@ void setNodesAndMusclesSphere(int divisions)
 {	
 	int index;
 	
-	// Node position values for a sphere with 62 nodes//0.5 is a good value.
+	// Setting the node positions
 	NodePosition[0].x = 0.0;
 	NodePosition[0].y = 1.0;
 	NodePosition[0].z = 0.0;
@@ -110,7 +123,7 @@ void setNodesAndMusclesSphere(int divisions)
 	}
 	
 	// Setting the nodes to -1 so you can tell the nodes that where not used.
-	// The first and the last nodes had 12 links so I made them all have 12.
+	// The first and the last nodes had division links so I made them all have division links.
 	// The rest only had 4 so you may want to revisit this.
 	for(int i = 0; i < NumberOfNodes; i++)
 	{
@@ -126,40 +139,103 @@ void setNodesAndMusclesSphere(int divisions)
 		NodeLinks[0*LinksPerNode + j] =  j + 1;
 	}
 	
-	for(int j = 0; j < 4; j++)
+	if(divisions == 4) //There is just one middle circle.
 	{
-		// Setting the edges for nodes that are connected to the 0th node
-		for(int i = 1; i < divisions + 1; i++)
+		for(int j = 0; j < 4; j++)
 		{
-			// Connect to node above
-			if(j == 0)
+			// Setting the edges for nodes that are connected to the 0th node
+			for(int i = 1; i < divisions + 1; i++)
 			{
-				NodeLinks[i*LinksPerNode + j] =  0;
-			}
-			
-			// Connect to the node to the left
-			if(j == 1)
-			{
-				NodeLinks[i*LinksPerNode + j] = (divisions + i - 2)%divisions + 1;
-			}
-			
-			// Connect to the node to the right
-			if(j == 2)
-			{
-				NodeLinks[i*LinksPerNode + j] =  (divisions + i)%divisions + 1;
-			}
-			
-			// Connect to the node below
-			if(j == 3)
-			{
-				NodeLinks[i*LinksPerNode + j] =  i + divisions;
+				// Connect to node above
+				if(j == 0)
+				{
+					NodeLinks[i*LinksPerNode + j] =  0;
+				}
+				
+				// Connect to the node to the left
+				if(j == 1)
+				{
+					NodeLinks[i*LinksPerNode + j] = (divisions + i - 2)%divisions + 1;
+				}
+				
+				// Connect to the node to the right
+				if(j == 2)
+				{
+					NodeLinks[i*LinksPerNode + j] =  (divisions + i)%divisions + 1;
+				}
+				
+				// Connect to the node below
+				if(j == 3)
+				{
+					NodeLinks[i*LinksPerNode + j] =  NumberOfNodes - 1;
+				}
 			}
 		}
-		
-		// Setting the middle sections
-		for(int k = 0; k < (divisions/2 - 3)*divisions; k += divisions)
+	}
+	else  // For the rest of the even numbers (6, 8,10 ...) there are multiple inter circles.
+	{
+		for(int j = 0; j < 4; j++)
 		{
-			for(int i = divisions + 1 + k; i <= 2*divisions + k; i++)
+			// Setting the edges for nodes that are connected to the 0th node
+			for(int i = 1; i < divisions + 1; i++)
+			{
+				// Connect to node above
+				if(j == 0)
+				{
+					NodeLinks[i*LinksPerNode + j] =  0;
+				}
+				
+				// Connect to the node to the left
+				if(j == 1)
+				{
+					NodeLinks[i*LinksPerNode + j] = (divisions + i - 2)%divisions + 1;
+				}
+				
+				// Connect to the node to the right
+				if(j == 2)
+				{
+					NodeLinks[i*LinksPerNode + j] =  (divisions + i)%divisions + 1;
+				}
+				
+				// Connect to the node below
+				if(j == 3)
+				{
+					NodeLinks[i*LinksPerNode + j] =  i + divisions;
+				}
+			}
+			
+			// Setting the middle sections
+			for(int k = 0; k < (divisions/2 - 3)*divisions; k += divisions)
+			{
+				for(int i = divisions + 1 + k; i <= 2*divisions + k; i++)
+				{
+					// Connect to node above
+					if(j == 0)
+					{
+						NodeLinks[i*LinksPerNode + j] =  i - divisions;
+					}
+					
+					// Connect to the node to the left
+					if(j == 1)
+					{
+						NodeLinks[i*LinksPerNode + j] =  (i + divisions - 2)%divisions + divisions + 1 + k;
+					}
+					
+					// Connect to the node to the right
+					if(j == 2)
+					{
+						NodeLinks[i*LinksPerNode + j] =  (i + divisions)%divisions + divisions + 1 + k;
+					}
+					
+					// Connect to the node below
+					if(j == 3)
+					{
+						NodeLinks[i*LinksPerNode + j] =  i + divisions;
+					}
+				}
+			}
+			// Setting the edges for the nodes that are linked to the last node
+			for(int i = NumberOfNodes -1 - divisions; i < NumberOfNodes - 1; i++)
 			{
 				// Connect to node above
 				if(j == 0)
@@ -170,48 +246,20 @@ void setNodesAndMusclesSphere(int divisions)
 				// Connect to the node to the left
 				if(j == 1)
 				{
-					NodeLinks[i*LinksPerNode + j] =  (i + divisions - 2)%divisions + divisions + 1 + k;
+					NodeLinks[i*LinksPerNode + j] = (i + divisions - 2)%divisions + NumberOfNodes -1 - divisions;
 				}
 				
 				// Connect to the node to the right
 				if(j == 2)
 				{
-					NodeLinks[i*LinksPerNode + j] =  (i + divisions)%divisions + divisions + 1 + k;
+					NodeLinks[i*LinksPerNode + j] =  (i+divisions)%divisions +NumberOfNodes -1 - divisions;
 				}
 				
 				// Connect to the node below
 				if(j == 3)
 				{
-					NodeLinks[i*LinksPerNode + j] =  i + divisions;
+					NodeLinks[i*LinksPerNode + j] =  NumberOfNodes - 1;
 				}
-			}
-		}
-		// Setting the edges for the nodes that are linked to the last node
-		for(int i = NumberOfNodes -1 - divisions; i < NumberOfNodes - 1; i++)
-		{
-		printf("\n C");
-			// Connect to node above
-			if(j == 0)
-			{
-				NodeLinks[i*LinksPerNode + j] =  i - divisions;
-			}
-			
-			// Connect to the node to the left
-			if(j == 1)
-			{
-				NodeLinks[i*LinksPerNode + j] = (i + divisions - 2)%divisions + NumberOfNodes -1 - divisions;
-			}
-			
-			// Connect to the node to the right
-			if(j == 2)
-			{
-				NodeLinks[i*LinksPerNode + j] =  (i+divisions)%divisions +NumberOfNodes -1 - divisions;
-			}
-			
-			// Connect to the node below
-			if(j == 3)
-			{
-				NodeLinks[i*LinksPerNode + j] =  NumberOfNodes - 1;
 			}
 		}
 	}
@@ -222,15 +270,15 @@ void setNodesAndMusclesSphere(int divisions)
 		NodeLinks[(NumberOfNodes - 1)*LinksPerNode + j] =  NumberOfNodes - 1 - divisions + j;
 	}
 	
-	
+	/*
 	for(int i = 0; i < NumberOfNodes; i++)
 	{
+		printf("\n Node Position [%d] = %f  %f  %f", i, NodePosition[i].x, NodePosition[i].y, NodePosition[i].z);
 		for(int j = 0; j < LinksPerNode; j++)
 		{
 			printf("\n NodeLinks[%d][%d] = %d", i, j, NodeLinks[i*LinksPerNode + j]);
 		}
 	}
-	
-	printf("\n Nodes created");
-	//while(1);
+	printf("\n Nodes and links created");
+	*/
 }
