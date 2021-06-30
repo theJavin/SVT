@@ -1,9 +1,9 @@
 // nvcc SVT.cu -o svt -lglut -lm -lGLU -lGL
-//To stop hit "control c" in the window you launched it from. stuff
+//To stop hit "control c" in the window you launched it from.
 
 // Length will be in millimeters
 // Time will be in milliseconds
-// Mass will be in ???
+// Mass will be in... mass units?
 
 // Fiber length 100 micrometers or 0.1 millimeters
 // Sodium wave speed .5 meters/sec or 0.5 millimeters/millisec

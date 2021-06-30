@@ -7,6 +7,7 @@
 
 // Fiber length 100 micrometers or 0.1 millimeters
 // Sodium wave speed .5 meters/sec or 0.5 millimeters/millisec
+
 #include <GL/glut.h>
 #include <math.h>
 #include <stdio.h>
@@ -15,29 +16,31 @@
 
 #define PI 3.141592654
 
-#define XWindowSize 2000
-#define YWindowSize 2000 
+#define XWindowSize 1000
+#define YWindowSize 1000 
 
 #define STOP_TIME 60000.0
-#define DT  0.001
-#define N 10
+#define DT  0.0001
+#define N 2000
+#define TOOSMALL 0.000001
 	
 #define DRAW 1000
 
 // Globals
 float Px[N], Vx[N], Fx[N], Mass[N];
 
-float FiberLength = 0.1;
+float centerX;
+float FiberLength;
 float FiberStrength = 10.0;
-float FiberCompresionMultiplier = 10.0;
-float FiberTentionMultiplier = 10.0;
-float FiberCompresionStopFraction = 0.6;
+float FiberCompressionMultiplier = 10.0;
+float FiberTensionMultiplier = 10.0;
+float FiberCompressionStopFraction = 0.7;
 
 float TendonLength = 0.1;
 float TendonStrength = 1.0;
-float TendonCompresionMultiplier = 10.0;
-float TendonTentionMultiplier = 10.0;
-float TendonCompresionStopFraction = 0.6;
+float TendonCompressionMultiplier = 10.0;
+float TendonTentionMultiplier = 1.0;
+float TendonCompressionStopFraction = 0.7;
 
 float APWaveSpeed[N]; //0.5 is a good value.
 float APWaveFront;
@@ -56,9 +59,14 @@ float AttachmentLeft, AttachmentRight;
 
 void set_initial_conditions()
 {
-	float centerX = FiberLength*(N+1)/2.0;
+	centerX = FiberLength*(N+1)/2.0;
 	AttachmentLeft = 0.0 - centerX;
-	
+	FiberLength = 200.0/(N+1);
+
+	//float centerX = 1.0;
+	//AttachmentLeft = 0.0;
+
+
 	// Node Values
 	for(int i = 0; i < N; i++)
 	{
@@ -70,18 +78,13 @@ void set_initial_conditions()
 	// Muscle (connector) Values
 	for(int i = 0; i < N-1; i++)
 	{	
-		APWaveSpeed[i] = 0.01;
+		APWaveSpeed[i] = 1.0;
 		RelaxationDuration[i] = 200.0;
-		ContractionStrength[i] = 5.0;
 		ContractionDuration[i] = 100.0;
+		ContractionStrength[i] = 2*FiberLength;
 	}
-	
-	RelaxationDuration[3] = 400.0;
-	RelaxationDuration[4] = 400.0;
-	RelaxationDuration[5] = 400.0;
-	RelaxationDuration[6] = 400.0;
-	
 	AttachmentRight = (float)(N+1)*FiberLength - centerX;
+	//AttachmentRight = 2;
 }
 
 void draw_picture()
@@ -92,18 +95,38 @@ void draw_picture()
 	// Drawing nodes
 	for(int i = 0; i < N; i++)
 	{
+		
 		glColor3d(1.0,1.0,1.0);
 		glPushMatrix();
 		glTranslatef(Px[i], 0.0, 0.0);
-		glutSolidSphere(0.005,20,20);
-		glPopMatrix();	
+		glutSolidSphere(50.0/N,20,20);
+		glPopMatrix();
+
+		/*
+		if (i%3 == 0)
+		{
+			glColor3d(1.0,1.0,1.0);
+			glPushMatrix();
+			glTranslatef(Px[i], 0.0, 0.0);
+			glutSolidSphere(0.005,20,20);
+			glPopMatrix();
+		}	
+		else
+		{
+			glColor3d(1.0,1.0,1.0);
+			glPushMatrix();
+			glTranslatef(Px[i+1], 0.0, 0.0);
+			glutSolidSphere(0.005,20,20);
+			glPopMatrix();
+		}
+		*/
 	}
 	
 	// Drawing muscles
 	glColor3d(1.0,0.0,0.0);
 	for(int i = 0; i < N-1; i++)
 	{
-		glLineWidth(1.0/(Px[i+1]-Px[i]));
+		glLineWidth(100.0/(Px[i+1]-Px[i]));
 		glBegin(GL_LINES);
 			glVertex3f(Px[i], 0.0, 0.0);
 			glVertex3f(Px[i+1], 0.0, 0.0);
@@ -128,7 +151,7 @@ void draw_picture()
 	glColor3d(1.0,1.0,0.0);
 	glPushMatrix();
 	glTranslatef(APWaveFront, 0.0, 0.0);
-	glutSolidSphere(0.02,20,20);
+	glutSolidSphere(50.0/N,20,20);
 	glPopMatrix();
 	/*	
 	glColor3d(1.0,1.0,0.0);
@@ -151,9 +174,9 @@ void generalMuscleForces()
 	{
 		dx = Px[i+1]-Px[i];
 		d  = sqrt(dx*dx);
-		if(d < FiberCompresionStopFraction*FiberLength)
+		if(d < FiberCompressionStopFraction*FiberLength)
 		{
-			f  = FiberStrength*FiberCompresionMultiplier*(d - FiberLength);
+			f  = FiberStrength*FiberCompressionMultiplier*(d - FiberLength);
 		}
 		else if(d < FiberLength)
 		{
@@ -161,18 +184,23 @@ void generalMuscleForces()
 		}
 		else
 		{
-			f  = FiberStrength*FiberTentionMultiplier*(d - FiberLength);
+			f  = FiberStrength*FiberTensionMultiplier*(d - FiberLength);
 		}
-		
+		if (d<TOOSMALL)
+		{
+			printf("\n1 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
+			exit(0);
+		}
 		Fx[i]   += f*dx/d;
 		Fx[i+1] -= f*dx/d;
+		
 	}
 	
 	dx = AttachmentLeft-Px[0];
 	d  = sqrt(dx*dx);
-	if(d < TendonCompresionStopFraction*TendonLength)
+	if(d < TendonCompressionStopFraction*TendonLength)
 	{
-		f  = TendonStrength*TendonCompresionMultiplier*(d - TendonLength);
+		f  = TendonStrength*TendonCompressionMultiplier*(d - TendonLength);
 	}
 	else if(d < FiberLength)
 	{
@@ -182,13 +210,18 @@ void generalMuscleForces()
 	{
 		f  = TendonStrength*TendonTentionMultiplier*(d - TendonLength);
 	}
+	if (d<TOOSMALL)
+		{
+			printf("\n2 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
+			exit(0);
+		}
 	Fx[0]   += f*dx/d;
 	
 	dx = AttachmentRight-Px[N-1];
 	d  = sqrt(dx*dx);
-	if(d < TendonCompresionStopFraction*FiberLength)
+	if(d < TendonCompressionStopFraction*FiberLength)
 	{
-		f  = TendonStrength*TendonCompresionMultiplier*(d - TendonLength);
+		f  = TendonStrength*TendonCompressionMultiplier*(d - TendonLength);
 	}
 	else if(d < FiberLength)
 	{
@@ -198,6 +231,11 @@ void generalMuscleForces()
 	{
 		f  = TendonStrength*TendonTentionMultiplier*(d - TendonLength);
 	}
+	if (d<TOOSMALL)
+		{
+			printf("\n3 BAD NOT GOOD d is small in function generalMuscleForces d=%f\n",d);
+			exit(0);
+		}
 	Fx[N-1]   += f*dx/d;
 }
 
@@ -214,6 +252,11 @@ int contractionForces(float dt, float time)
 	{
 		if(Px[i] <= APWaveFront && APWaveFront < Px[i+1])
 		{
+			if (Px[i+1]-Px[i]<TOOSMALL)
+			{
+				printf("\nNodes are getting dangerously close func(ContractionForces)\n");
+				exit(0);
+			}	
 			ratio = (APWaveFront - Px[i])/(Px[i+1]-Px[i]);
 			aPWaveFrontInMuscle = i;
 			if(ContractionOn[i] == 0)
@@ -358,7 +401,7 @@ void control()
 
 void Display(void)
 {
-	gluLookAt(0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	gluLookAt(100.0, 0.0, 100.0, 100.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -375,7 +418,7 @@ void reshape(int w, int h)
 
 	glLoadIdentity();
 
-	glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 80.0);
+	glFrustum(-0.2, 0.2, -0.2, 0.2, 0.2, 120.0);
 
 	glMatrixMode(GL_MODELVIEW);
 }
