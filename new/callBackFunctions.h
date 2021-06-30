@@ -135,7 +135,7 @@ void KeyPressed(unsigned char key, int x, int y)
 		}
 		drawPicture();
 	}
-	if(key == 'W')
+	if(key == 's')
 	{
 		for(int i = 0; i < NumberOfNodes; i++)
 		{

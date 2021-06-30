@@ -693,6 +693,8 @@ void setup()
 			printf("\n Good Bye. \n");
 			exit(0);
 		}
+		if(divisions%2 != 0)
+		{
 			printf("\n I said the number had to be even!");
 			printf("\n Beem me up Scotty. There is no intelligent life down here. \n");
 			printf("\n Good Bye. \n");
