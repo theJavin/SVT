@@ -330,7 +330,7 @@ void Display(void)
 
 void idle()
 {
-	n_body(DT);
+	n_body(Dt);
 }
 
 void reshape(int w, int h)
