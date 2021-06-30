@@ -27,6 +27,7 @@ using namespace std;
 
 // Globals
 float Dt;
+
 int DrawRate;
 int Pause;
 
@@ -794,7 +795,7 @@ void simulationScript()
 	printf("\n The positive x-axis is to the right.");
 	printf("\n The positive y-axis is up.");
 	printf("\n The positive z-axis is towards you.");
-	printf("\n For an orthoganal view type 0.");
+	printf("\n For an orthoganal view type o.");
 	printf("\n For a fulstrum view type f");
 	printf("\n To do a positive spin on the x-axis type x (negative X).");
 	printf("\n To do a positive spin on the y-axis type y (negative Y).");

@@ -1,4 +1,4 @@
-In this file do not use the equal sign in a comment because that is the triger to read an input.
+In this file do not use the equal sign in a comment because that is the trigger to read an input.
 
 Type of shape to run on 1 for circle and 2 for sphere. (int)
 TypeOfShape = 2;
@@ -7,7 +7,7 @@ Number of divisions in a circle or divisions in each circle of a sphere. There w
 If you are working on a sphere the number needs to be even and greater than or equal to 4. (int) 
 Divisions = 6;
 
-The viscosity of the medium the nodes will be floating in. This just gives some resitance to movement. 
+The viscosity of the medium the nodes will be floating in. This just gives some resistance to movement. 
 It will be scaled by dividing by the number of nodes. (float)
 Viscosity = 5.0;
 
@@ -54,7 +54,7 @@ The length of time between heart beats.
 A 1000 milliseconds is 60 beats per minute. (float)
 BeatPeriod = 100.0;
 
-How often you draw to the screen. How many iteration are run between draws.
+How often you draw to the screen. How many iterations are run between draws.
 DrawRate = 1000;
 
 Your time step.
