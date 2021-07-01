@@ -5,19 +5,26 @@ TypeOfShape = 2;
 
 Number of divisions in a circle or divisions in each circle of a sphere. There will also be this many circles in each sphere. 
 If you are working on a sphere the number needs to be even and greater than or equal to 4. (int) 
-Divisions = 6;
+Divisions = 12;
 
-The viscosity of the medium the nodes will be floating in. This just gives some resitance to movement. 
+The viscosity of the medium the nodes will be floating in. The units will be grams/milli-second. This just gives some resitance to movement. 
 It will be scaled by dividing by the number of nodes. (float)
-Viscosity = 5.0;
+Viscosity = 25.0;
 
 This will be the strength of the central push back force which will simulate blood pressure.
-It will be scaled by dividing by the number of nodes. 
+The units are grams*(Millisecons^2)/Millimeters.
+We are assuming an average presure of 100 millimeterrs of mercury. 
+100 millimeterrs of mercury is 13332.24 Pascals which is in kg/(meters*seconds*seconds).
+Putting this into our units of grams, milliseconds, millimeters gives 0.01333224 
+To get the force on the node we will need an area to multiply the pressure by.
+We will assume that the area of a node is the total surface area of the sphere divided by the number of nodes.
+So scaling is 4*Pi*r^2/#nodes. Hense force on a node is 0.01333224*4*Pi*r^2/#nodes.
+This pushes the denser packed nodes more. Need to put node density in this some how.
 Not sure what to do with a circle because of 1D pressure?? This needs work. (float)
-BloodPresure = 1.0;
+BloodPresure = 0.01333224;
 
-This should be the mass of the atria. We need to get a good number for this. (float) 
-MassOfAtria = 1.0;
+This should be the mass of the atria we believe is about 50 grams. (float) 
+MassOfAtria = 50.0;
 
 The strength multiplier when the muscle is compressed past its disired compresion length. (float)
 MuscleCompresionMultiplier = 50.0;
