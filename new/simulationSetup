@@ -7,11 +7,7 @@ Number of divisions in a circle or divisions in each circle of a sphere. There w
 If you are working on a sphere the number needs to be even and greater than or equal to 4. (int) 
 Divisions = 24;
 
-<<<<<<< HEAD
-The viscosity of the medium the nodes will be floating in. This just gives some resistance to movement. 
-=======
 The viscosity of the medium the nodes will be floating in. The units will be grams/milli-second. This just gives some resitance to movement. 
->>>>>>> a73d076ac5bb5f50f6fabb98b7bce27aa79a3390
 It will be scaled by dividing by the number of nodes. (float)
 Viscosity = 25.0;
 
