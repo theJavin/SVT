@@ -21,7 +21,7 @@ using namespace std;
 
 #define PI 3.141592654
 
-//#define NumberOfNodes 266 //266 //62
+//#define NumberOfNodes 2nsight debugger library unloaded66 //266 //62
 //#define NumberOfMuscles 552 //552 //132
 //#define LinksPerNode 24 //24
 
@@ -133,7 +133,7 @@ void readSimulationParameters()
 		
 	BaseContractionDuration = 20.0;  // 100.0
 	BaseRelaxationDuration = 40.0;  // 200.0
-	BaseContractionStrength = 0.2; // This will be scaled by multipling by muscle length.
+	BaseContractionStrength = 0.2; // This will be scaled by multipling by muscle length 
 */
 	
 	ifstream data;
