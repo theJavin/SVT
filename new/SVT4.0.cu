@@ -40,6 +40,7 @@ float BloodPresure;
 float BeatPeriod;
 
 float MassOfAtria;
+float RadiusOfAtria = 1.0; // Should be 31.83098862
 
 int NumberOfNodes;
 int NumberOfMuscles;
@@ -49,6 +50,7 @@ float4 *NodePosition, *NodeVelocity, *NodeForce;
 float *NodeMass;
 int *NodeLinks; // The nodes that this node is connected to
 int *NodeMuscles; // The muscle that connects this node to ther other nodes
+float *NodeArea; // The surface area a node covers
 int *NodeAblatedYesNo;
 
 // How the muscle will act without contraction.
@@ -95,7 +97,7 @@ void allocateMemory(int, int);
 void setNodesAndMusclesCircle(int); 
 void setNodesAndMusclesSphere(int);
 void linkNodesToMuscles();
-void setMuscleAttributesAndNodeMasses(int);
+void setMuscleAttributesAndNodeMasses(int, int);
 void drawPicture();
 void generalMuscleForces();
 void outwardPresure();
@@ -270,6 +272,7 @@ void allocateMemory(int type, int divisions)
 	NodeForce    = (float4*)malloc(NumberOfNodes*sizeof(float4));
 	
 	NodeMass = (float*)malloc(NumberOfNodes*sizeof(float));
+	NodeArea = (float*)malloc(NumberOfNodes*sizeof(float));
 	NodeLinks = (int*)malloc(NumberOfNodes*LinksPerNode*sizeof(int));
 	NodeMuscles = (int*)malloc(NumberOfNodes*LinksPerNode*sizeof(int));
 	NodeAblatedYesNo = (int*)malloc(NumberOfNodes*sizeof(int));
@@ -338,6 +341,11 @@ void linkNodesToMuscles()
 				{
 					if((MuscleConectionA[k] == i && MuscleConectionB[k] == NodeLinks[i*LinksPerNode + j]) || (MuscleConectionA[k] == NodeLinks[i*LinksPerNode + j] && MuscleConectionB[k] == i))
 					{
+						if(NumberOfNodes*LinksPerNode <= (i*LinksPerNode + j))
+						{
+							printf("\nTSU Error: number of muscles is out of bounds\n");
+							exit(0);
+						} 
 						NodeMuscles[i*LinksPerNode + j] = k;
 					}
 				}
@@ -346,18 +354,68 @@ void linkNodesToMuscles()
 	}
 }
 
-void setMuscleAttributesAndNodeMasses(int divisions)
+void setMuscleAttributesAndNodeMasses(int type, int divisions)
 {	
 	float dx, dy, dz, d;
 	float sum, totalLengthOfAllMuscles;
-	float bloodPresureScaling;
+	//float bloodPresureScaling;
+	float surfaceArea;
+	int count;
+	float averageRadius, totalArea, areaAdjustment;
 	
-	//MassOfAtria = 1.0;
-	//MuscleCompresionMultiplier = 50.0;
-	//MuscleTentionMultiplier = 50.0;
-	Viscosity /= NumberOfNodes;
-	bloodPresureScaling = divisions*(divisions/2 - 1) + 2;  // Set it to the number of nodes for a sphere in both the circle and the sphere simulation. Think about this some more. Hard to have presure in 1D.
-	BloodPresure /= bloodPresureScaling;
+	Viscosity /= NumberOfNodes;  // WHy divide by the number of nodes???????????????????
+	
+	// Getting some method of asigning an area to a node so we can get a force from the presure.
+	// We are letting the area be the circle made from the average radius out from a the node in question.
+	
+	printf("\n number of nodes = %d", NumberOfNodes);
+	printf("\n number of nodes = %d", NumberOfNodes);
+	printf("\n number of links = %d", LinksPerNode);
+	printf("\n number of links = %d", LinksPerNode);
+
+	surfaceArea = 4.0*PI*RadiusOfAtria*RadiusOfAtria;
+	
+	totalArea = 0.0;
+	for(int i = 0; i < NumberOfNodes; i++)
+	{
+		averageRadius = 0.0;
+		count = 0;
+		for(int j = 0; j < LinksPerNode; j++)
+		{
+		
+			if(NodeLinks[i*LinksPerNode + j] != -1)
+			{
+				dx = NodePosition[NodeLinks[i*LinksPerNode + j]].x - NodePosition[i].x;
+				dy = NodePosition[NodeLinks[i*LinksPerNode + j]].y - NodePosition[i].y;
+				dz = NodePosition[NodeLinks[i*LinksPerNode + j]].z - NodePosition[i].z;
+				averageRadius += sqrt(dx*dx + dy*dy + dz*dz);
+				count++;
+			}
+		}
+		if(count != 0) 
+		{
+			averageRadius /= count;
+			NodeArea[i] = PI*averageRadius*averageRadius; 
+		}
+		else
+		{
+			NodeArea[i] = 0.0; 
+		}
+		totalArea += NodeArea[i];
+	}
+	
+	areaAdjustment = surfaceArea - totalArea;
+	if(areaAdjustment != 0.0)
+	{
+		for(int i = 0; i < NumberOfNodes; i++)
+		{
+			NodeArea[i] += NodeArea[i]/areaAdjustment;
+		}
+	}
+	
+	//surfaceArea = 4.0*PI*RadiusOfAtria*RadiusOfAtria;
+	//bloodPresureScaling = surfaceArea/NumberOfNodes; // Need to scale by density too ??????????????
+	//BloodPresure *= bloodPresureScaling;
 	
 	CenterOfSimulation.x = 0.0;
 	CenterOfSimulation.y = 0.0;
@@ -376,6 +434,10 @@ void setMuscleAttributesAndNodeMasses(int divisions)
 	}
 	
 	// Setting the mass of all muscles.
+	if(type == 1)
+	{
+		MassOfAtria /= divisions; // If you are on a circle. There are division circle that make up the sphere so the circle is 1/divsiions the total mass.
+	}
 	for(int i = 0; i < NumberOfMuscles; i++)
 	{	
 		MuscleMass[i] = (MuscleLength[i]/totalLengthOfAllMuscles)*MassOfAtria;
@@ -397,7 +459,10 @@ void setMuscleAttributesAndNodeMasses(int divisions)
 		MuscleColor[i].x = 1.0;
 		MuscleColor[i].y = 0.0;
 		MuscleColor[i].z = 0.0;
-		
+	}
+	
+	for(int i = 0; i < NumberOfNodes; i++)
+	{
 		NodeAblatedYesNo[i] = 0; // Setting all nodes to not ablated.
 	}
 	
@@ -501,7 +566,6 @@ void drawPicture()
 			
 		}	
 	}
-	
 	glutSwapBuffers();
 }
 
@@ -599,7 +663,7 @@ void outwardPresure()
 			exit(0);
 		}
 		
-		f  = -BloodPresure;
+		f  = -BloodPresure*NodeArea[i];
 		
 		NodeForce[i].x  += f*dx/d;
 		NodeForce[i].y  += f*dy/d;
@@ -820,7 +884,7 @@ void setup()
 	
 	linkNodesToMuscles();
 	
-	setMuscleAttributesAndNodeMasses(Divisions);
+	setMuscleAttributesAndNodeMasses(TypeOfShape, Divisions);
 	
 	hardCodedAblatedNodes();
 	

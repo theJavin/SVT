@@ -106,9 +106,9 @@ void setNodesAndMusclesSphere(int divisions)
 			index++;
 		}	
 	}
-	NodePosition[NumberOfNodes-1].x = 0.0;
+	NodePosition[NumberOfNodes-1].x =  0.0;
 	NodePosition[NumberOfNodes-1].y = -1.0;
-	NodePosition[NumberOfNodes-1].z = 0.0;
+	NodePosition[NumberOfNodes-1].z =  0.0;
 	
 	// Zeroing out velocity and acceleration
 	for(int i = 0; i < NumberOfNodes; i++)
@@ -129,6 +129,11 @@ void setNodesAndMusclesSphere(int divisions)
 	{
 		for(int j = 0; j < LinksPerNode; j++)
 		{
+			if(NumberOfNodes*LinksPerNode <= (0*LinksPerNode + j)) 
+			{
+				printf("\n TSU error: Out of bounds\n");
+				exit(0);
+			}
 			NodeLinks[i*LinksPerNode + j] =  -1;
 		}	
 	}
@@ -136,16 +141,27 @@ void setNodesAndMusclesSphere(int divisions)
 	// Setting edges for the 0th node.
 	for(int j = 0; j < divisions; j++)
 	{
+		if(NumberOfNodes*LinksPerNode <= (0*LinksPerNode + j)) 
+		{
+			printf("\n TSU error: Out of bounds\n");
+			exit(0);
+		}
 		NodeLinks[0*LinksPerNode + j] =  j + 1;
 	}
 	
-	if(divisions == 4) //There is just one middle circle.
+	if(divisions == 4) //In 4 there is just one middle circle.
 	{
 		for(int j = 0; j < 4; j++)
 		{
 			// Setting the edges for nodes that are connected to the 0th node
 			for(int i = 1; i < divisions + 1; i++)
 			{
+				if(NumberOfNodes*LinksPerNode <= (i*LinksPerNode + j)) 
+				{
+					printf("\n TSU error: Out of bounds\n");
+					exit(0);
+				}
+				
 				// Connect to node above
 				if(j == 0)
 				{
@@ -179,6 +195,11 @@ void setNodesAndMusclesSphere(int divisions)
 			// Setting the edges for nodes that are connected to the 0th node
 			for(int i = 1; i < divisions + 1; i++)
 			{
+				if(NumberOfNodes*LinksPerNode <= (i*LinksPerNode + j)) 
+				{
+					printf("\n TSU error: Out of bounds\n");
+					exit(0);
+				}
 				// Connect to node above
 				if(j == 0)
 				{
@@ -209,6 +230,11 @@ void setNodesAndMusclesSphere(int divisions)
 			{
 				for(int i = divisions + 1 + k; i <= 2*divisions + k; i++)
 				{
+					if(NumberOfNodes*LinksPerNode <= (i*LinksPerNode + j)) 
+					{
+						printf("\n TSU error: Out of bounds\n");
+						exit(0);
+					}
 					// Connect to node above
 					if(j == 0)
 					{
@@ -234,9 +260,15 @@ void setNodesAndMusclesSphere(int divisions)
 					}
 				}
 			}
+			
 			// Setting the edges for the nodes that are linked to the last node
 			for(int i = NumberOfNodes -1 - divisions; i < NumberOfNodes - 1; i++)
 			{
+				if(NumberOfNodes*LinksPerNode <= (i*LinksPerNode + j)) 
+				{
+					printf("\n TSU error: Out of bounds\n");
+					exit(0);
+				}
 				// Connect to node above
 				if(j == 0)
 				{
@@ -267,6 +299,11 @@ void setNodesAndMusclesSphere(int divisions)
 	// Setting the last node.
 	for(int j = 0; j < divisions; j++)
 	{
+		if(NumberOfNodes*LinksPerNode <= ((NumberOfNodes - 1)*LinksPerNode + j)) 
+		{
+			printf("\n TSU error: Out of bounds\n");
+			exit(0);
+		}
 		NodeLinks[(NumberOfNodes - 1)*LinksPerNode + j] =  NumberOfNodes - 1 - divisions + j;
 	}
 	
@@ -279,6 +316,7 @@ void setNodesAndMusclesSphere(int divisions)
 			printf("\n NodeLinks[%d][%d] = %d", i, j, NodeLinks[i*LinksPerNode + j]);
 		}
 	}
-	printf("\n Nodes and links created");
 	*/
+	printf("\n Nodes and links created");
+	
 }
