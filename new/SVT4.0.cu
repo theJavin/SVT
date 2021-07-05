@@ -355,32 +355,66 @@ void linkNodesToMuscles()
 
 void setMuscleAttributesAndNodeMasses(int type, int divisions)
 {	
-	float dx, dy, dz, d, d1, d2;
+	float dx, dy, dz, d;
 	float sum, totalLengthOfAllMuscles;
-	float bloodPresureScaling;
+	//float bloodPresureScaling;
 	float surfaceArea;
+	int count;
+	float averageRadius, totalArea, areaAdjustment;
 	
-	Viscosity /= NumberOfNodes;
+	Viscosity /= NumberOfNodes;  // WHy divide by the number of nodes???????????????????
 	
-	/*
+	// Getting some method of asigning an area to a node so we can get a force from the presure.
+	// We are letting the area be the circle made from the average radius out from a the node in question.
+	
+	printf("\n number of nodes = %d", NumberOfNodes);
+	printf("\n number of nodes = %d", NumberOfNodes);
+	printf("\n number of links = %d", LinksPerNode);
+	printf("\n number of links = %d", LinksPerNode);
+
+	surfaceArea = 4.0*PI*RadiusOfAtria*RadiusOfAtria;
+	
+	totalArea = 0.0;
 	for(int i = 0; i < NumberOfNodes; i++)
 	{
-		dx = NodePosition[NodeLinks[i*LinksPerNode + 0]].x - NodePosition[i*LinksPerNode + 3].x;
-		dy = NodePosition[NodeLinks[i*LinksPerNode + 0]].y - NodePosition[i*LinksPerNode + 3].y;
-		dz = NodePosition[NodeLinks[i*LinksPerNode + 0]].z - NodePosition[i*LinksPerNode + 3].z;
-		d1 = sqrt(dx*dx + dy*dy + dz*dz)/2.0;
-		dx = NodePosition[NodeLinks[i*LinksPerNode + 1]].x - NodePosition[i*LinksPerNode + 2].x;
-		dy = NodePosition[NodeLinks[i*LinksPerNode + 1]].y - NodePosition[i*LinksPerNode + 2].y;
-		dz = NodePosition[NodeLinks[i*LinksPerNode + 1]].z - NodePosition[i*LinksPerNode + 2].z;
-		d2 = sqrt(dx*dx + dy*dy + dz*dz)/2.0;
-		NodeArea[i] = d1*d2;
-		printf("\n node area[%d] = %f", i, NodeArea[i]);
+		averageRadius = 0.0;
+		count = 0;
+		for(int j = 0; j < LinksPerNode; j++)
+		{
+		
+			if(NodeLinks[i*LinksPerNode + j] != -1)
+			{
+				dx = NodePosition[NodeLinks[i*LinksPerNode + j]].x - NodePosition[i].x;
+				dy = NodePosition[NodeLinks[i*LinksPerNode + j]].y - NodePosition[i].y;
+				dz = NodePosition[NodeLinks[i*LinksPerNode + j]].z - NodePosition[i].z;
+				averageRadius += sqrt(dx*dx + dy*dy + dz*dz);
+				count++;
+			}
+		}
+		if(count != 0) 
+		{
+			averageRadius /= count;
+			NodeArea[i] = PI*averageRadius*averageRadius; 
+		}
+		else
+		{
+			NodeArea[i] = 0.0; 
+		}
+		totalArea += NodeArea[i];
 	}
-	*/
 	
-	surfaceArea = 4.0*PI*RadiusOfAtria*RadiusOfAtria;
-	bloodPresureScaling = surfaceArea/NumberOfNodes; // Need to scale by density too ??????????????
-	BloodPresure *= bloodPresureScaling;
+	areaAdjustment = surfaceArea - totalArea;
+	if(areaAdjustment != 0.0)
+	{
+		for(int i = 0; i < NumberOfNodes; i++)
+		{
+			NodeArea[i] += NodeArea[i]/areaAdjustment;
+		}
+	}
+	
+	//surfaceArea = 4.0*PI*RadiusOfAtria*RadiusOfAtria;
+	//bloodPresureScaling = surfaceArea/NumberOfNodes; // Need to scale by density too ??????????????
+	//BloodPresure *= bloodPresureScaling;
 	
 	CenterOfSimulation.x = 0.0;
 	CenterOfSimulation.y = 0.0;
@@ -628,7 +662,7 @@ void outwardPresure()
 			exit(0);
 		}
 		
-		f  = -BloodPresure;   //*NodeArea[i];
+		f  = -BloodPresure*NodeArea[i];
 		
 		NodeForce[i].x  += f*dx/d;
 		NodeForce[i].y  += f*dy/d;
