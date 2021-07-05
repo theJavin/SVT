@@ -120,7 +120,9 @@ void readSimulationParameters();
 #include "./setNodesAndMuscles.h"
 #include "./callBackFunctions.h"
 
-void readSimulationParameters()
+void gcc -fsanitize=leak main.cpp -llsan
+
+2) Execute withreadSimulationParameters()
 {
 /*
 	MassOfAtria = 1.0;// Need to look this up. ????????????
@@ -303,7 +305,7 @@ void linkNodesToMuscles()
 	int index = 0;
 	for(int i = 0; i < NumberOfNodes; i++)
 	{
-		for(int j = 0; j < LinksPerNode; j++)
+		for(int j = 0; j < LinksPerNode + 4; j++)
 		{
 			if(NodeLinks[i*LinksPerNode + j] != -1)
 			{
@@ -363,7 +365,7 @@ void setMuscleAttributesAndNodeMasses(int type, int divisions)
 	int count;
 	float averageRadius, totalArea, areaAdjustment;
 	
-	Viscosity /= NumberOfNodes;  // WHy divide by the number of nodes???????????????????
+	Viscosity /= NumberOfNodes;  // Why divide by the number of nodes???????????????????
 	
 	// Getting some method of asigning an area to a node so we can get a force from the presure.
 	// We are letting the area be the circle made from the average radius out from a the node in question.
