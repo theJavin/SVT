@@ -1,4 +1,4 @@
-// nvcc SVT4.0.cu -o svt4.0 -lglut -lm -lGLU -lGL
+// nvcc -G SVT4.0.cu -o svt4.0 -lglut -lm -lGLU -lGL
 //To stop hit "control c" in the window you launched it from. stuff
 
 // Length will be in millimeters
@@ -120,9 +120,9 @@ void readSimulationParameters();
 #include "./setNodesAndMuscles.h"
 #include "./callBackFunctions.h"
 
-void gcc -fsanitize=leak main.cpp -llsan
 
-2) Execute withreadSimulationParameters()
+
+void readSimulationParameters()
 {
 /*
 	MassOfAtria = 1.0;// Need to look this up. ????????????
@@ -305,7 +305,7 @@ void linkNodesToMuscles()
 	int index = 0;
 	for(int i = 0; i < NumberOfNodes; i++)
 	{
-		for(int j = 0; j < LinksPerNode + 4; j++)
+		for(int j = 0; j < LinksPerNode; j++)
 		{
 			if(NodeLinks[i*LinksPerNode + j] != -1)
 			{
@@ -853,7 +853,7 @@ void n_body(float dt)
 
 void simulationScript()
 {
-	printf("\n\n\n The Particle Modeling Group hopes you injoy your interactive right atriam simulation.\n\n");
+	printf("\n\n\n The Particle Modeling Group hopes you enjoy your interactive right atriam simulation.\n\n");
 	printf("\n The simulation is paused.");
 	printf("\n Move to the mouse over the simulation window and type the following commands.\n");
 	printf("\n To run the simulation type r.");
