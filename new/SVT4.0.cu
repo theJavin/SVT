@@ -1,6 +1,6 @@
 // nvcc -G SVT4.0.cu -o svt4.0 -lglut -lm -lGLU -lGL
 //To stop hit "control c" in the window you launched it from. stuff
-
+//testing git stuff again
 // Length will be in millimeters
 // Time will be in milliseconds
 // Mass will be in ???
