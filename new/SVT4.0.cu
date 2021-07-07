@@ -1,5 +1,5 @@
 // nvcc -G SVT4.0.cu -o svt4.0 -lglut -lm -lGLU -lGL
-//To stop hit "control c" in the window you launched it from. stuff
+//To stop hit "control c" in the window you launched it from.
 
 // Length will be in millimeters
 // Time will be in milliseconds
@@ -239,7 +239,7 @@ void readSimulationParameters()
 	else
 	{
 		printf("\n Type of simulation is incorrect. \n");
-		printf("\n Good Bye. \n");
+		printf("\n Yippee ki yay mother fucker!  \n");
 		exit(0);
 	}
 }
@@ -967,3 +967,34 @@ int main(int argc, char** argv)
 	return 0;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//I wanted to make the code 1000 lines so here we are

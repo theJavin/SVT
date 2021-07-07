@@ -9,7 +9,7 @@ Divisions = 24;
 
 The viscosity of the medium the nodes will be floating in. The units will be grams/milli-second. This just gives some resitance to movement. 
 It will be scaled by dividing by the number of nodes. (float)
-Viscosity = 100.0;
+Viscosity = 125.0;
 
 This will be the strength of the central push back force which will simulate blood pressure.
 The units are grams*(Millisecons^2)/Millimeters.
